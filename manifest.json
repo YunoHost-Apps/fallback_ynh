@@ -1,0 +1,95 @@
+{
+	"name": "Fallback server",
+	"id": "fallback",
+	"packaging_format": 1,
+	"description": {
+		"en": "Fallback server for YunoHost.",
+		"fr": "Serveur de secours pour YunoHost."
+	},
+	"version": "1.0",
+	"url": "https://github.com/maniackcrudelis/Fallback-server",
+	"license": "GPL-3.0",
+	"maintainer": {
+		"name": "Maniack Crudelis",
+		"email": "maniackc_dev@crudelis.fr"
+	},
+	"requirements": {
+		"yunohost": ">= 2.7.2"
+	},
+	"multi_instance": true,
+	"services": [
+	],
+	"arguments": {
+		"install" : [
+			{
+				"name": "install_type",
+				"ask": {
+					"en": "Choose which kind of installation you want.",
+					"fr": "Choisissez le type d'installation que vous souhaitez"
+				},
+				"choices": ["main server", "fallback server"],
+				"default": "main server",
+				"help": {
+					"en": "Choose 'main server' if you make an installation on your real server. Or 'fallback server' if it's your backup server.",
+					"fr": "Choisissez 'main server' si vous effectuez une installation sur votre vrai serveur. Ou 'fallback server' si c'est votre serveur de secours."
+				},
+			},
+			{
+				"name": "encrypt",
+				"type": "boolean",
+				"ask": {
+					"en": "[main server only] Do you want to encrypt your backups ?",
+					"fr": "[main server seulement] Voulez-vous chiffrer vos sauvegardes ?"
+				},
+				"default": true,
+				"help": {
+					"en": "You should desactive the encryption only if your fallback server is really safe.",
+					"fr": "Vous ne devriez désactiver le chiffrement que si le serveur de secours est vraiment sûr."
+				},
+			},
+			{
+				"name": "encryption_pwd",
+				"type": "password",
+				"ask": {
+					"en": "[main server only] Set the password for encryption.",
+					"fr": "[main server seulement] Définissez le mot de passe de chiffrement."
+				},
+				"help": {
+					"en": "It's needed if you not turn off the encryption.",
+					"fr": "C'est nécessaire si vous n'avez pas désactivé le chiffrement."
+				},
+				"optional": true
+			},
+			{
+				"name": "ssh_host",
+				"ask": {
+					"en": "[main server only] Set the domain name (or ip adress) for the fallback server.",
+					"fr": "[main server seulement] Définissez le nom de domaine (ou l'adresse ip) du serveur de secours."
+				},
+				"example": "domain.tld",
+				"optional": true
+			},
+			{
+				"name": "ssh_port",
+				"ask": {
+					"en": "[main server only] Set the port for the ssh connection.",
+					"fr": "[main server seulement] Définissez le port pour la connexion ssh."
+				},
+				"default": "22",
+				"optional": true
+			},
+			{
+				"name": "pub_key",
+				"ask": {
+					"en": "[fallback server only] Put here the public ssh key.",
+					"fr": "[fallback server seulement] Placez ici la clé publique ssh."
+				},
+				"help": {
+					"en": "The public key will be given at the end of the install process for the main server.",
+					"fr": "La clé publique ssh vous sera fournie à la fin de l'installation du serveur principal."
+				},
+				"optional": true
+			}
+		]
+	}
+}

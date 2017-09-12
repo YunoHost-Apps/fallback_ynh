@@ -1,0 +1,275 @@
+#!/bin/bash
+
+#=================================================
+# GENERIC START
+#=================================================
+# IMPORT GENERIC HELPERS
+#=================================================
+
+source _common.sh
+source /usr/share/yunohost/helpers
+
+#=================================================
+# MANAGE SCRIPT FAILURE
+#=================================================
+
+# Exit if an error occurs during the execution of the script
+ynh_abort_if_errors
+
+#=================================================
+# RETRIEVE ARGUMENTS FROM THE MANIFEST
+#=================================================
+
+install_type=$YNH_APP_ARG_INSTALL_TYPE
+encrypt=$YNH_APP_ARG_ENCRYPT
+encryption_pwd=$YNH_APP_ARG_ENCRYPTION_PWD
+ssh_host=$YNH_APP_ARG_SSH_HOST
+ssh_port=$YNH_APP_ARG_SSH_PORT
+pub_key=$YNH_APP_ARG_PUB_KEY
+	# ssh credential...
+	ssh_host=192.168.1.165
+
+app=$YNH_APP_INSTANCE_NAME
+
+#=================================================
+# CHECK IF THE APP CAN BE INSTALLED WITH THESE ARGS
+#=================================================
+
+if [ "$install_type" == "main server" ]; then
+	install_type=main
+elif  [ "$install_type" == "fallback server" ]; then
+	install_type=fallback
+else
+	ynh_die "Install type not recognized"
+fi
+
+if [ "$install_type" == "main" ]
+then
+	if [ $encrypt -eq 1 ]; then
+		test -n "$encryption_pwd" || ynh_die "encryption_pwd can't be empty if you choose a 'main server' installation with encryption."
+	fi
+	test -n "$ssh_host" || ynh_die "ssh_host can't be empty if you choose a 'main server' installation."
+	test -n "$ssh_port" ||  ynh_die "ssh_port can't be empty if you choose a 'main server' installation."
+else
+	test -n "$pub_key" ||  ynh_die "pub_key can't be empty if you choose a 'fallback server' installation"
+fi
+
+final_path=/opt/yunohost/$app
+test ! -e "$final_path" || ynh_die "This path already contains a folder"
+
+#=================================================
+# STORE SETTINGS FROM MANIFEST
+#=================================================
+
+ynh_app_setting_set $app install_type $install_type
+
+#=================================================
+# STANDARD MODIFICATIONS
+#=================================================
+# INSTALL DEPENDENCIES
+#=================================================
+
+ynh_install_app_dependencies ccrypt rsync mlocate
+
+#=================================================
+# DOWNLOAD, CHECK AND UNPACK SOURCE
+#=================================================
+
+ynh_app_setting_set $app final_path $final_path
+# Download, check integrity, uncompress and patch the source from app.src
+# ynh_setup_source "$final_path"
+mkdir -p "$final_path"
+cp -a /home/yunouser/fallback/. "$final_path"
+
+#=================================================
+# SPECIFIC SETUP
+#=================================================
+
+if [ "$install_type" == "main" ]
+then
+	#=================================================
+	# CONFIG FOR THE MAIN SERVER
+	#=================================================
+	# MODIFY THE CONFIG
+	#=================================================
+
+	configfile="$final_path/send_process/config.conf"
+	ynh_replace_string "ssh_user=.*" "ssh_user=$app" "$configfile"
+	ynh_replace_string "ssh_host=.*" "ssh_host=$ssh_host" "$configfile"
+	ynh_replace_string "ssh_port=.*" "ssh_port=$ssh_port" "$configfile"
+
+	data_dir="/home/yunohost.app/$app/fallback_backup"
+	ynh_replace_string "main_storage_dir=.*" "main_storage_dir=$data_dir" "$configfile"
+	ynh_replace_string "encrypt=.*" "encrypt=$encrypt" "$configfile"
+
+	#=================================================
+	# CREATE A SSH KEY
+	#=================================================
+
+	ssh_key="$final_path/send_process/ssh_key"
+	ssh-keygen -t rsa -b 4096 -N "" -f "$ssh_key" > /dev/null
+	chown root: "$ssh_key"
+	chmod 400 "$ssh_key"
+	pub_key="${ssh_key}.pub"
+	ynh_replace_string "ssh_key=.*" "ssh_key=$ssh_key" "$configfile"
+
+	sudo mkdir -p /root/.ssh
+	ssh-keyscan -t rsa $ssh_host >> /root/.ssh/known_hosts 2> /dev/null
+
+	#=================================================
+	# FILL THE APPS LIST
+	#=================================================
+
+	echo "#000# For each app you want to backup, precede by [.]" > "$final_path/send_process/app_list"
+	yunohost app list -i | grep id: | sed 's/.*id:/[]:/' >> "$final_path/send_process/app_list"
+	ynh_replace_string ".*: fallback" "[-]: fallback" "$final_path/send_process/app_list"
+
+	#=================================================
+	# SET THE CRON
+	#=================================================
+
+	echo "0 1 * * * root cd \"$final_path/send_process/send_backup.sh\"" > /etc/cron.d/$app
+
+	#=================================================
+	# CREATE DIRECTORIES
+	#=================================================
+
+	mkdir -p "$final_path/send_process/checksum"
+	mkdir -p "$data_dir/backup"
+
+	#=================================================
+	# STORE THE PASSWORD FOR ENCRYPTION
+	#=================================================
+
+	passkey="$final_path/send_process/passkey"
+	ynh_replace_string "pass_file=.*" "pass_file=$passkey" "$configfile"
+	echo "$encryption_pwd" > "$passkey"
+
+else
+	#=================================================
+	# CONFIG FOR THE FALLBACK SERVER
+	#=================================================
+	# CREATE DEDICATED USER
+	#=================================================
+
+	ynh_system_user_create $app "/home/$app"
+
+	#=================================================
+	# ADD THE SSH PUBLIC KEY
+	#=================================================
+
+	mkdir -p "/home/$app/.ssh"
+	# Secure the ssh key
+	echo -n "no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty " >> "/home/$app/.ssh/authorized_keys"
+	# Then add the key
+	echo "$pub_key" >> "/home/$app/.ssh/authorized_keys"
+	chown -R $app: "/home/$app/.ssh"
+
+	#=================================================
+	# SET THE USER IN DEPLOY_FALLBACK SCRIPT
+	#=================================================
+
+	ynh_replace_string "\(local_archive_dir=\"/home/\)USER" "\1$app" "$final_path/deploy_process/deploy_fallback.sh"
+	ynh_replace_string "\(local_archive_dir=\"/home/\)USER" "\1$app" "$final_path/deploy_process/close_fallback.sh"
+
+	#=================================================
+	# SET A CHROOT FOR THE SSH USER
+	#=================================================
+
+	# The parent directory shall belong to root
+	chroot_dir="/home/$app"
+	chown root: "$chroot_dir"
+
+	# Create directories for the binaries
+	mkdir $chroot_dir/{bin,lib,lib64}
+
+	# Copy the ld-linux file, according to the architecture
+	SUPPRESS_WARNING cp /lib/ld-linux.so.2 $chroot_dir/lib/
+	SUPPRESS_WARNING cp /lib64/ld-linux-x86-64.so.2 $chroot_dir/lib64/
+	SUPPRESS_WARNING cp /lib/ld-linux-armhf.so.3 $chroot_dir/lib/
+
+	# Update the locate database
+	updatedb
+
+	# Declare functions to find and copy the binaries.
+	cp_which () {
+		cp `which $1` $chroot_dir/bin/$1
+	}
+	locate_and_cp () {
+		local path_of_file=$(locate $1 | head -n1)
+		cp $path_of_file $chroot_dir/lib/
+	}
+
+	# Copy bash in the chroot
+	cp_which bash
+	locate_and_cp libncurses.so.5
+	locate_and_cp libtinfo.so.5
+	locate_and_cp libdl.so.2
+	locate_and_cp libc.so.6
+
+	# Then rsync
+	cp_which rsync
+	locate_and_cp libattr.so.1
+	locate_and_cp libacl.so.1
+	locate_and_cp libpopt.so.0
+
+	# Set the chroot in the ssh config
+	echo "
+	Match User $app # Automatically added by $app
+	ChrootDirectory /home/%u # Automatically added by $app
+	AllowTcpForwarding no # Automatically added by $app
+	X11Forwarding no # Automatically added by $app" >> /etc/ssh/sshd_config
+
+	# Reload ssh service
+	systemctl reload ssh
+fi
+
+#=================================================
+# CREATE THE DATA DIRECTORY
+#=================================================
+
+mkdir -p "/home/yunohost.app/$app"
+
+#=================================================
+# SET LINKS FOR THE ADMIN USER
+#=================================================
+
+if [ "$install_type" == "main" ]; then
+	ln -s "$final_path/send_process/app_list" "/home/yunohost.app/$app/app_list"
+	ln -s "$final_path/send_process/config.conf" "/home/yunohost.app/$app/config.conf"
+	ln -s "$final_path/update_from_fallback_process/update_from_fallback.sh" "/home/yunohost.app/$app/update_from_fallback"
+else
+	ln -s "$final_path/deploy_process/deploy_fallback.sh" "/home/yunohost.app/$app/deploy_fallback"
+	ln -s "$final_path/deploy_process/close_fallback.sh" "/home/yunohost.app/$app/close_fallback"
+fi
+
+#=================================================
+# GENERIC FINALIZATION
+#=================================================
+# SECURE FILES AND DIRECTORIES
+#=================================================
+
+# Set permissions to app files
+chown -R root: $final_path
+
+
+if [ "$install_type" == "main" ]
+then
+	#=================================================
+	# SETUP LOGROTATE
+	#=================================================
+
+	mkdir -p /var/log/$app
+	ln -s /var/log/$app/$app "$final_path/send_process/send_backup.log"
+	# Use logrotate to manage application logfile(s)
+	ynh_use_logrotate
+
+	#=================================================
+	# DISCLAIMER
+	#=================================================
+
+	WARNING echo "App list..."
+
+	WARNING echo "Ssh key..."
+	WARNING cat "$pub_key"
+fi
