@@ -1,6 +1,6 @@
-SOURCE_URL=url of app's source
-SOURCE_SUM=sha256 checksum
-SOURCE_SUM_PRG=sha256sum
+SOURCE_URL=https://github.com/maniackcrudelis/Fallback-server/archive/v0.2.tar.gz
+SOURCE_SUM=3b95975437cbf4623ec11c892b64dce5
+SOURCE_SUM_PRG=md5sum
 SOURCE_FORMAT=tar.gz
 SOURCE_IN_SUBDIR=true
 SOURCE_FILENAME=

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+app=$YNH_APP_INSTANCE_NAME
+final_path=__FINALPATH__
+
+app_list="$final_path/send_process/app_list"
+
+if grep ": $app\$" "$app_list"
+then
+	sed -i "/: $app\$/d" "$app_list"
+	sort "$app_list" --output="$app_list"
+fi

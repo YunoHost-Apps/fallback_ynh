@@ -15,38 +15,11 @@ source /usr/share/yunohost/helpers
 
 app=$YNH_APP_INSTANCE_NAME
 
-domain=$(ynh_app_setting_get $app domain)
-path_url=$(ynh_app_setting_get $app path)
-admin=$(ynh_app_setting_get $app admin)
-is_public=$(ynh_app_setting_get $app is_public)
+install_type=$(ynh_app_setting_get $app install_type)
+encrypt=$(ynh_app_setting_get $app encrypt)
 final_path=$(ynh_app_setting_get $app final_path)
-port=$(ynh_app_setting_get $app port)
-db_name=$(ynh_app_setting_get $app db_name)
-
-#=================================================
-# ENSURE DOWNWARD COMPATIBILITY
-#=================================================
-
-# Fix is_public as a boolean value
-if [ "$is_public" = "Yes" ]; then
-	ynh_app_setting_set $app is_public 1
-	is_public=1
-elif [ "$is_public" = "No" ]; then
-	ynh_app_setting_set $app is_public 0
-	is_public=0
-fi
-
-# If db_name doesn't exist, create it
-if [ -z $db_name ]; then
-	db_name=$(ynh_sanitize_dbid $app)
-	ynh_app_setting_set $app db_name $db_name
-fi
-
-# If final_path doesn't exist, create it
-if [ -z $final_path ]; then
-	final_path=/var/www/$app
-	ynh_app_setting_set $app final_path $final_path
-fi
+ssh_host=$(ynh_app_setting_get $app ssh_host)
+ssh_port=$(ynh_app_setting_get $app ssh_port)
 
 #=================================================
 # BACKUP BEFORE UPGRADE THEN ACTIVE TRAP
@@ -62,13 +35,6 @@ ynh_clean_setup () {
 ynh_abort_if_errors
 
 #=================================================
-# CHECK THE PATH
-#=================================================
-
-# Normalize the URL path syntax
-path_url=$(ynh_normalize_url_path $path_url)
-
-#=================================================
 # STANDARD UPGRADE STEPS
 #=================================================
 # DOWNLOAD, CHECK AND UNPACK SOURCE
@@ -78,50 +44,123 @@ path_url=$(ynh_normalize_url_path $path_url)
 ynh_setup_source "$final_path"
 
 #=================================================
-# NGINX CONFIGURATION
-#=================================================
-
-# Create a dedicated nginx config
-ynh_add_nginx_config
-
-#=================================================
-# CREATE DEDICATED USER
-#=================================================
-
-# Create a system user
-ynh_system_user_create $app
-
-#=================================================
-# PHP-FPM CONFIGURATION
-#=================================================
-
-# Create a dedicated php-fpm config
-ynh_add_fpm_config
-
-#=================================================
 # SPECIFIC UPGRADE
 #=================================================
-# ...
+
+if [ "$install_type" == "main" ]
+then
+	#=================================================
+	# CONFIG FOR THE MAIN SERVER
+	#=================================================
+	# MODIFY THE CONFIG
+	#=================================================
+
+	configfile="$final_path/send_process/config.conf"
+	ynh_replace_string "ssh_user=.*" "ssh_user=$app" "$configfile"
+	ynh_replace_string "ssh_host=.*" "ssh_host=$ssh_host" "$configfile"
+	ynh_replace_string "ssh_port=.*" "ssh_port=$ssh_port" "$configfile"
+
+	data_dir="/home/yunohost.app/$app/fallback_backup"
+	ynh_replace_string "main_storage_dir=.*" "main_storage_dir=$data_dir" "$configfile"
+	ynh_replace_string "encrypt=.*" "encrypt=$encrypt" "$configfile"
+
+	#=================================================
+	# UPDATE THE CRON
+	#=================================================
+
+	echo "0 1 * * * root cd \"$final_path/send_process/send_backup.sh\"" > /etc/cron.d/$app
+
+else
+	#=================================================
+	# CONFIG FOR THE FALLBACK SERVER
+	#=================================================
+	# CREATE DEDICATED USER
+	#=================================================
+
+	if ! ynh_system_user_exists "$app"
+	then
+		useradd -d "/home/$app" --system --user-group $app --shell /bin/bash
+	fi
+
+	#=================================================
+	# SET THE USER IN DEPLOY_FALLBACK SCRIPTS
+	#=================================================
+
+	ynh_replace_string "\(local_archive_dir=\"/home/\)USER" "\1$app" "$final_path/deploy_process/deploy_fallback.sh"
+	ynh_replace_string "\(local_archive_dir=\"/home/\)USER" "\1$app" "$final_path/deploy_process/close_fallback.sh"
+
+	#=================================================
+	# UPDATE THE CHROOT FOR THE SSH USER
+	#=================================================
+
+	chroot_dir="/home/$app"
+
+	# Create directories for the binaries
+	mkdir -p $chroot_dir/{bin,lib,lib64}
+
+	# Copy the ld-linux file, according to the architecture
+	SUPPRESS_WARNING cp /lib/ld-linux.so.2 $chroot_dir/lib/ || true
+	SUPPRESS_WARNING cp /lib64/ld-linux-x86-64.so.2 $chroot_dir/lib64/ || true
+	SUPPRESS_WARNING cp /lib/ld-linux-armhf.so.3 $chroot_dir/lib/ || true
+
+	# Update the locate database
+	updatedb
+
+	# Declare functions to find and copy the binaries.
+	cp_which () {
+		cp `which $1` $chroot_dir/bin/$1
+	}
+	locate_and_cp () {
+		local path_of_file=$(locate $1 | head -n1)
+		cp $path_of_file $chroot_dir/lib/
+	}
+
+	# Copy bash in the chroot
+	cp_which bash
+	locate_and_cp libncurses.so.5
+	locate_and_cp libtinfo.so.5
+	locate_and_cp libdl.so.2
+	locate_and_cp libc.so.6
+
+	# Then rsync
+	cp_which rsync
+	locate_and_cp libattr.so.1
+	locate_and_cp libacl.so.1
+	locate_and_cp libpopt.so.0
+
+	# Create the directory for rsync
+	mkdir -p $chroot_dir/backup
+
+	# The parent directory shall belong to root
+	chown $app: -R "$chroot_dir"
+	chown root: "$chroot_dir"
+
+	# Update the ssh config
+	if ! grep "# Automatically added by $app" /etc/ssh/sshd_config
+	then
+		echo "
+		Match User $app # Automatically added by $app
+		ChrootDirectory /home/%u # Automatically added by $app
+		AllowTcpForwarding no # Automatically added by $app
+		X11Forwarding no # Automatically added by $app" >> /etc/ssh/sshd_config
+
+		# Reload ssh service
+		systemctl reload ssh
+	fi
+fi
+
+#=================================================
+# UPDATE LINKS FOR THE ADMIN USER
 #=================================================
 
-# Verify the checksum and backup the file if it's different
-ynh_backup_if_checksum_is_different "$final_path/CONFIG_FILE"
-# Recalculate and store the config file checksum into the app settings
-ynh_store_file_checksum "$final_path/CONFIG_FILE"
-
-#=================================================
-# SETUP LOGROTATE
-#=================================================
-
-# Use logrotate to manage app-specific logfile(s)
-ynh_use_logrotate
-
-#=================================================
-# SETUP SYSTEMD
-#=================================================
-
-# Create a dedicated systemd config
-ynh_systemd_config
+if [ "$install_type" == "main" ]; then
+	ln -sf "$final_path/send_process/app_list" "/home/yunohost.app/$app/app_list"
+	ln -sf "$final_path/send_process/config.conf" "/home/yunohost.app/$app/config.conf"
+	ln -sf "$final_path/update_from_fallback_process/update_from_fallback.sh" "/home/yunohost.app/$app/update_from_fallback"
+else
+	ln -sf "$final_path/deploy_process/deploy_fallback.sh" "/home/yunohost.app/$app/deploy_fallback"
+	ln -sf "$final_path/deploy_process/close_fallback.sh" "/home/yunohost.app/$app/close_fallback"
+fi
 
 #=================================================
 # GENERIC FINALIZATION
@@ -129,26 +168,15 @@ ynh_systemd_config
 # SECURE FILES AND DIRECTORIES
 #=================================================
 
-# Set right permissions for curl installation
+# Set permissions to app files
 chown -R root: $final_path
 
-#=================================================
-# SETUP SSOWAT
-#=================================================
-
-if [ $is_public -eq 0 ]
-then	# Remove the public access
-	ynh_app_setting_delete $app skipped_uris
-fi
-# Make app public if necessary
-if [ $is_public -eq 1 ]
+if [ "$install_type" == "main" ]
 then
-	# unprotected_uris allows SSO credentials to be passed anyway
-	ynh_app_setting_set $app unprotected_uris "/"
+	#=================================================
+	# SETUP LOGROTATE
+	#=================================================
+
+	# Use logrotate to manage application logfile(s)
+	ynh_use_logrotate --non-append
 fi
-
-#=================================================
-# RELOAD NGINX
-#=================================================
-
-systemctl reload nginx

@@ -60,6 +60,14 @@ test ! -e "$final_path" || ynh_die "This path already contains a folder"
 #=================================================
 
 ynh_app_setting_set $app install_type $install_type
+ynh_app_setting_set $app encrypt $encrypt
+if [ "$install_type" == "main" ]
+then
+	ynh_app_setting_set $app ssh_host $ssh_host
+	ynh_app_setting_set $app ssh_port $ssh_port
+else
+	ynh_app_setting_set $app pub_key $pub_key
+fi
 
 #=================================================
 # STANDARD MODIFICATIONS
@@ -80,6 +88,10 @@ ynh_setup_source "$final_path"
 #=================================================
 # SPECIFIC SETUP
 #=================================================
+# CREATE THE DATA DIRECTORY
+#=================================================
+
+mkdir -p "/home/yunohost.app/$app"
 
 if [ "$install_type" == "main" ]
 then
@@ -109,7 +121,7 @@ then
 	pub_key="${ssh_key}.pub"
 	ynh_replace_string "ssh_key=.*" "ssh_key=$ssh_key" "$configfile"
 
-	sudo mkdir -p /root/.ssh
+	mkdir -p /root/.ssh
 	ssh-keyscan -t rsa $ssh_host >> /root/.ssh/known_hosts 2> /dev/null
 
 	#=================================================
@@ -140,6 +152,7 @@ then
 	passkey="$final_path/send_process/passkey"
 	ynh_replace_string "pass_file=.*" "pass_file=$passkey" "$configfile"
 	echo "$encryption_pwd" > "$passkey"
+	chmod 400 "$passkey"
 
 else
 	#=================================================
@@ -162,10 +175,9 @@ else
 	echo -n "no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty " >> "/home/$app/.ssh/authorized_keys"
 	# Then add the key
 	echo "$pub_key" >> "/home/$app/.ssh/authorized_keys"
-	chown -R $app: "/home/$app/.ssh"
 
 	#=================================================
-	# SET THE USER IN DEPLOY_FALLBACK SCRIPT
+	# SET THE USER IN DEPLOY_FALLBACK SCRIPTS
 	#=================================================
 
 	ynh_replace_string "\(local_archive_dir=\"/home/\)USER" "\1$app" "$final_path/deploy_process/deploy_fallback.sh"
@@ -229,12 +241,6 @@ else
 fi
 
 #=================================================
-# CREATE THE DATA DIRECTORY
-#=================================================
-
-mkdir -p "/home/yunohost.app/$app"
-
-#=================================================
 # SET LINKS FOR THE ADMIN USER
 #=================================================
 
@@ -271,8 +277,8 @@ then
 	# DISCLAIMER
 	#=================================================
 
-	WARNING echo "App list..."
+	WARNING echo -e "\nBy default, no apps will be backuped for your fallback server. To select which apps you want to backup, please have a look at the app_list file in /home/yunohost.app/$app/app_list.\n"
 
-	WARNING echo "Ssh key..."
+	WARNING echo "Please take note of your public ssh key. This will be usefull during the installation on your fallback server."
 	WARNING cat "$pub_key"
 fi

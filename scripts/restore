@@ -27,10 +27,11 @@ ynh_abort_if_errors
 
 app=$YNH_APP_INSTANCE_NAME
 
-domain=$(ynh_app_setting_get $app domain)
-path_url=$(ynh_app_setting_get $app path)
+install_type=$(ynh_app_setting_get $app install_type)
+encrypt=$(ynh_app_setting_get $app encrypt)
 final_path=$(ynh_app_setting_get $app final_path)
-db_name=$(ynh_app_setting_get $app db_name)
+ssh_host=$(ynh_app_setting_get $app ssh_host)
+ssh_port=$(ynh_app_setting_get $app ssh_port)
 
 #=================================================
 # CHECK IF THE APP CAN BE RESTORED
@@ -48,29 +49,103 @@ test ! -d $final_path \
 ynh_restore_file "$final_path"
 
 #=================================================
-# RESTORE USER RIGHTS
-#=================================================
-
-# Restore permissions on app files
-chown -R root: $final_path
-
-#=================================================
 # SPECIFIC RESTORATION
 #=================================================
 # REINSTALL DEPENDENCIES
 #=================================================
 
 # Define and install dependencies
-ynh_install_app_dependencies ccrypt rsync
+ynh_install_app_dependencies ccrypt rsync mlocate
+
+if [ "$install_type" == "main" ]
+then
+
+	#=================================================
+	# ADD THE HOST TO THE KNOWN HOST LIST
+	#=================================================
+
+	mkdir -p /root/.ssh
+	ssh-keyscan -t rsa $ssh_host >> /root/.ssh/known_hosts 2> /dev/null
+
+	#=================================================
+	# RESTORE LOGROTATE
+	#=================================================
+
+	ynh_restore_file "/etc/logrotate.d/$app"
+
+	#=================================================
+	# RESTORE THE CRON FILE
+	#=================================================
+
+	ynh_restore_file "/etc/cron.d/$app"
+
+else
+	#=================================================
+	# RECREATE DEDICATED USER
+	#=================================================
+
+	if ! ynh_system_user_exists "$app"
+	then
+		useradd -d "/home/$app" --system --user-group $app --shell /bin/bash
+	fi
+
+	#=================================================
+	# RESTORE USER DIRECTORIES
+	#=================================================
+
+	ynh_restore_file "/home/$app/bin"
+	ynh_restore_file "/home/$app/lib"
+	ynh_restore_file "/home/$app/lib64"
+	ynh_restore_file "/home/$app/.ssh"
+
+	# Update the ssh config
+	if ! grep "# Automatically added by $app" /etc/ssh/sshd_config
+	then
+		echo "
+		Match User $app # Automatically added by $app
+		ChrootDirectory /home/%u # Automatically added by $app
+		AllowTcpForwarding no # Automatically added by $app
+		X11Forwarding no # Automatically added by $app" >> /etc/ssh/sshd_config
+
+		# Reload ssh service
+		systemctl reload ssh
+	fi
+fi
 
 #=================================================
-# RESTORE THE CRON FILE
+# RECREATE DIRECTORIES
 #=================================================
 
-ynh_restore_file "/etc/cron.d/$app"
+mkdir -p "/home/yunohost.app/$app/fallback_backup/backup"
+if [ "$install_type" == "main" ]
+then
+	mkdir -p /var/log/$app
+else
+	mkdir -p /home/$app/backup
+fi
 
 #=================================================
-# RESTORE THE LOGROTATE CONFIGURATION
+# SET LINKS FOR THE ADMIN USER
 #=================================================
 
-ynh_restore_file "/etc/logrotate.d/$app"
+if [ "$install_type" == "main" ]; then
+	ln -sf "$final_path/send_process/app_list" "/home/yunohost.app/$app/app_list"
+	ln -sf "$final_path/send_process/config.conf" "/home/yunohost.app/$app/config.conf"
+	ln -sf "$final_path/update_from_fallback_process/update_from_fallback.sh" "/home/yunohost.app/$app/update_from_fallback"
+else
+	ln -sf "$final_path/deploy_process/deploy_fallback.sh" "/home/yunohost.app/$app/deploy_fallback"
+	ln -sf "$final_path/deploy_process/close_fallback.sh" "/home/yunohost.app/$app/close_fallback"
+fi
+
+#=================================================
+# GENERIC FINALIZATION
+#=================================================
+# SECURE FILES AND DIRECTORIES
+#=================================================
+
+if [ "$install_type" == "fallback" ]
+then
+	# The parent directory shall belong to root
+	chown $app: -R "/home/$app"
+	chown root: "/home/$app"
+fi

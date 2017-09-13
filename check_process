@@ -5,7 +5,7 @@
 		install_type="main server"
 		encrypt=1
 		encryption_pwd="password"
-		ssh_host="fallback.tld"
+		ssh_host="ci-apps.yunohost.org"
 		ssh_port="22"
 	; Checks
 		pkg_linter=1

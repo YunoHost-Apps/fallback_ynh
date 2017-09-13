@@ -27,9 +27,8 @@ ynh_abort_if_errors
 
 app=$YNH_APP_INSTANCE_NAME
 
+install_type=$(ynh_app_setting_get $app install_type)
 final_path=$(ynh_app_setting_get $app final_path)
-domain=$(ynh_app_setting_get $app domain)
-db_name=$(ynh_app_setting_get $app db_name)
 
 #=================================================
 # STANDARD BACKUP STEPS
@@ -42,13 +41,28 @@ ynh_backup "$final_path"
 #=================================================
 # SPECIFIC BACKUP
 #=================================================
-# BACKUP LOGROTATE
-#=================================================
 
-ynh_backup "/etc/logrotate.d/$app"
+if [ "$install_type" == "main" ]
+then
 
-#=================================================
-# BACKUP THE CRON FILE
-#=================================================
+	#=================================================
+	# BACKUP LOGROTATE
+	#=================================================
 
-ynh_backup "/etc/cron.d/$app"
+	ynh_backup "/etc/logrotate.d/$app"
+
+	#=================================================
+	# BACKUP THE CRON FILE
+	#=================================================
+
+	ynh_backup "/etc/cron.d/$app"
+else
+	#=================================================
+	# BACKUP USER DIRECTORIES
+	#=================================================
+
+	ynh_backup "/home/$app/bin"
+	ynh_backup "/home/$app/lib"
+	ynh_backup "/home/$app/lib64"
+	ynh_backup "/home/$app/.ssh"
+fi
