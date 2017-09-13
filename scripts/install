@@ -26,8 +26,6 @@ encryption_pwd=$YNH_APP_ARG_ENCRYPTION_PWD
 ssh_host=$YNH_APP_ARG_SSH_HOST
 ssh_port=$YNH_APP_ARG_SSH_PORT
 pub_key=$YNH_APP_ARG_PUB_KEY
-	# ssh credential...
-	ssh_host=192.168.1.165
 
 app=$YNH_APP_INSTANCE_NAME
 
@@ -77,9 +75,7 @@ ynh_install_app_dependencies ccrypt rsync mlocate
 
 ynh_app_setting_set $app final_path $final_path
 # Download, check integrity, uncompress and patch the source from app.src
-# ynh_setup_source "$final_path"
-mkdir -p "$final_path"
-cp -a /home/yunouser/fallback/. "$final_path"
+ynh_setup_source "$final_path"
 
 #=================================================
 # SPECIFIC SETUP
@@ -152,7 +148,10 @@ else
 	# CREATE DEDICATED USER
 	#=================================================
 
-	ynh_system_user_create $app "/home/$app"
+	if ! ynh_system_user_exists "$app"
+	then
+		useradd -d "/home/$app" --system --user-group $app --shell /bin/bash
+	fi
 
 	#=================================================
 	# ADD THE SSH PUBLIC KEY
@@ -176,17 +175,15 @@ else
 	# SET A CHROOT FOR THE SSH USER
 	#=================================================
 
-	# The parent directory shall belong to root
 	chroot_dir="/home/$app"
-	chown root: "$chroot_dir"
 
 	# Create directories for the binaries
-	mkdir $chroot_dir/{bin,lib,lib64}
+	mkdir -p $chroot_dir/{bin,lib,lib64}
 
 	# Copy the ld-linux file, according to the architecture
-	SUPPRESS_WARNING cp /lib/ld-linux.so.2 $chroot_dir/lib/
-	SUPPRESS_WARNING cp /lib64/ld-linux-x86-64.so.2 $chroot_dir/lib64/
-	SUPPRESS_WARNING cp /lib/ld-linux-armhf.so.3 $chroot_dir/lib/
+	SUPPRESS_WARNING cp /lib/ld-linux.so.2 $chroot_dir/lib/ || true
+	SUPPRESS_WARNING cp /lib64/ld-linux-x86-64.so.2 $chroot_dir/lib64/ || true
+	SUPPRESS_WARNING cp /lib/ld-linux-armhf.so.3 $chroot_dir/lib/ || true
 
 	# Update the locate database
 	updatedb
@@ -212,6 +209,13 @@ else
 	locate_and_cp libattr.so.1
 	locate_and_cp libacl.so.1
 	locate_and_cp libpopt.so.0
+
+	# Create the directory for rsync
+	mkdir -p $chroot_dir/backup
+
+	# The parent directory shall belong to root
+	chown $app: -R "$chroot_dir"
+	chown root: "$chroot_dir"
 
 	# Set the chroot in the ssh config
 	echo "
@@ -251,7 +255,6 @@ fi
 
 # Set permissions to app files
 chown -R root: $final_path
-
 
 if [ "$install_type" == "main" ]
 then

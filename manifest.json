@@ -32,7 +32,7 @@
 				"help": {
 					"en": "Choose 'main server' if you make an installation on your real server. Or 'fallback server' if it's your backup server.",
 					"fr": "Choisissez 'main server' si vous effectuez une installation sur votre vrai serveur. Ou 'fallback server' si c'est votre serveur de secours."
-				},
+				}
 			},
 			{
 				"name": "encrypt",
@@ -45,7 +45,7 @@
 				"help": {
 					"en": "You should desactive the encryption only if your fallback server is really safe.",
 					"fr": "Vous ne devriez désactiver le chiffrement que si le serveur de secours est vraiment sûr."
-				},
+				}
 			},
 			{
 				"name": "encryption_pwd",
