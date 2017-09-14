@@ -67,6 +67,10 @@
 					"fr": "[main server seulement] Définissez le nom de domaine (ou l'adresse ip) du serveur de secours."
 				},
 				"example": "domain.tld",
+				"help": {
+					"en": "This server has to be up, for the ssh-keyscan command.",
+					"fr": "Ce serveur doit être en route, pour la commande ssh-keyscan."
+				},
 				"optional": true
 			},
 			{

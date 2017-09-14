@@ -138,6 +138,13 @@ else
 fi
 
 #=================================================
+# CONFIGURE HOOKS
+#=================================================
+
+ynh_replace_string "__FINALPATH__" "$final_path" "../hooks/post_app_install"
+ynh_replace_string "__FINALPATH__" "$final_path" "../hooks/post_app_remove"
+
+#=================================================
 # GENERIC FINALIZATION
 #=================================================
 # SECURE FILES AND DIRECTORIES

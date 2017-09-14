@@ -111,7 +111,7 @@ else
 		cp `which $1` $chroot_dir/bin/$1
 	}
 	locate_and_cp () {
-		local path_of_file=$(locate $1 | head -n1)
+		local path_of_file=$(locate $1 | grep -v /home/ | head -n1)
 		cp $path_of_file $chroot_dir/lib/
 	}
 
@@ -161,6 +161,13 @@ else
 	ln -sf "$final_path/deploy_process/deploy_fallback.sh" "/home/yunohost.app/$app/deploy_fallback"
 	ln -sf "$final_path/deploy_process/close_fallback.sh" "/home/yunohost.app/$app/close_fallback"
 fi
+
+#=================================================
+# CONFIGURE HOOKS
+#=================================================
+
+ynh_replace_string "__FINALPATH__" "$final_path" "../hooks/post_app_install"
+ynh_replace_string "__FINALPATH__" "$final_path" "../hooks/post_app_remove"
 
 #=================================================
 # GENERIC FINALIZATION
