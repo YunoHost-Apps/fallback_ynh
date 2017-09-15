@@ -64,7 +64,7 @@
 [YEP 3.3 - Faciliter le contrôle de l'intégrité des sources](https://github.com/YunoHost/doc/blob/master/packaging_apps_guidelines_fr.md#yep-33)  
 `Validated`  
 [YEP 3.5 - Suivre les recommendations de la documentation de l'app](https://github.com/YunoHost/doc/blob/master/packaging_apps_guidelines_fr.md#yep-35)  
-`Partially validated`  
+`Validated`  
 [YEP 3.6 - Mettre à jour les versions contenant des CVE](https://github.com/YunoHost/doc/blob/master/packaging_apps_guidelines_fr.md#yep-36)  
 `Validated`  
 [YEP 4.3 - Fournir un script de sauvegarde YunoHost fonctionnel](https://github.com/YunoHost/doc/blob/master/packaging_apps_guidelines_fr.md#yep-43)  
