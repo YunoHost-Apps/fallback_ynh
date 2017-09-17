@@ -66,7 +66,7 @@ then
 	ynh_app_setting_set $app ssh_host $ssh_host
 	ynh_app_setting_set $app ssh_port $ssh_port
 else
-	ynh_app_setting_set $app pub_key $pub_key
+	ynh_app_setting_set $app pub_key "$pub_key"
 fi
 
 #=================================================
@@ -276,7 +276,7 @@ then
 	#=================================================
 
 	mkdir -p /var/log/$app
-	ln -s /var/log/$app/$app "$final_path/send_process/send_backup.log"
+	ln -s /var/log/$app/$app.log "$final_path/send_process/send_backup.log"
 	# Use logrotate to manage application logfile(s)
 	ynh_use_logrotate
 
