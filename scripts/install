@@ -136,7 +136,7 @@ then
 	# SET THE CRON
 	#=================================================
 
-	echo "0 1 * * * root \"$final_path/send_process/send_backup.sh\"" > /etc/cron.d/$app
+	echo "0 1 * * * root \"$final_path/send_process/send_backup.sh\" > /dev/null" > /etc/cron.d/$app
 
 	#=================================================
 	# CREATE DIRECTORIES
