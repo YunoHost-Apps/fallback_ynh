@@ -22,6 +22,12 @@ ssh_host=$(ynh_app_setting_get $app ssh_host)
 ssh_port=$(ynh_app_setting_get $app ssh_port)
 
 #=================================================
+# CHECK VERSION
+#=================================================
+
+ynh_abort_if_up_to_date
+
+#=================================================
 # BACKUP BEFORE UPGRADE THEN ACTIVE TRAP
 #=================================================
 
@@ -99,9 +105,9 @@ else
 	mkdir -p $chroot_dir/{bin,lib,lib64}
 
 	# Copy the ld-linux file, according to the architecture
-	SUPPRESS_WARNING cp /lib/ld-linux.so.2 $chroot_dir/lib/ || true
-	SUPPRESS_WARNING cp /lib64/ld-linux-x86-64.so.2 $chroot_dir/lib64/ || true
-	SUPPRESS_WARNING cp /lib/ld-linux-armhf.so.3 $chroot_dir/lib/ || true
+	ynh_exec_warn_less cp /lib/ld-linux.so.2 $chroot_dir/lib/ || true
+	ynh_exec_warn_less cp /lib64/ld-linux-x86-64.so.2 $chroot_dir/lib64/ || true
+	ynh_exec_warn_less cp /lib/ld-linux-armhf.so.3 $chroot_dir/lib/ || true
 
 	# Update the locate database
 	updatedb

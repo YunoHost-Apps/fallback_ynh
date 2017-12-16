@@ -28,10 +28,10 @@ ynh_abort_if_errors
 app=$YNH_APP_INSTANCE_NAME
 
 install_type=$(ynh_app_setting_get $app install_type)
-encrypt=$(ynh_app_setting_get $app encrypt)
 final_path=$(ynh_app_setting_get $app final_path)
 ssh_host=$(ynh_app_setting_get $app ssh_host)
 ssh_port=$(ynh_app_setting_get $app ssh_port)
+pub_key=$(ynh_app_setting_get $app pub_key)
 
 #=================================================
 # CHECK IF THE APP CAN BE RESTORED
@@ -149,3 +149,42 @@ then
 	chown $app: -R "/home/$app"
 	chown root: "/home/$app"
 fi
+
+#=================================================
+# SEND A README FOR THE ADMIN
+#=================================================
+
+if [ "$install_type" == "main" ]
+then
+	Informations="By default, no apps will be backuped for your fallback server. To select which apps you want to backup, please have a look at the app_list file in /home/yunohost.app/$app/app_list.
+
+Please take note of your public ssh key. This will be usefull during the installation on your fallback server :
+$(cat "$pub_key")
+
+Fallback is going to backup and send its backup every night.
+If you want to change the frequency, have a look to the file /etc/cron.d/$app.
+
+You can also find a config file at /home/yunohost.app/fallback/config.conf"
+else
+	domain=$(yunohost domain list | grep -m1 "-" | awk '{print $2}')
+	if [ -n "$domain" ]
+	then
+		domain="$domain or "
+	else
+		domain=""
+	fi
+	Informations="This server is now your fallback, you should keep this server only for this purpose.
+
+Credentials for the ssh connexion from the other part of this app:
+- ssh_host: $domain$(localhost)
+- ssh_user: $app
+- ssh_port: $(grep "^Port " /etc/ssh/sshd_config | awk '{print $2}')"
+fi
+
+message="$Informations
+
+For more informations about how to use this app, please read the readme https://github.com/YunoHost-Apps/fallback_ynh/blob/master/README.md#how-it-works.
+
+If you facing an issue or want to improve this app, please open a new issue in this project: https://github.com/YunoHost-Apps/fallback_ynh"
+
+ynh_send_readme_to_admin "$message" "root"
