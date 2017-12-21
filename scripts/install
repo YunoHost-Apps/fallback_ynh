@@ -22,7 +22,7 @@ ynh_abort_if_errors
 
 install_type=$YNH_APP_ARG_INSTALL_TYPE
 encrypt=$YNH_APP_ARG_ENCRYPT
-encryption_pwd=$YNH_APP_ARG_ENCRYPTION_PWD
+ynh_print_OFF; encryption_pwd=$YNH_APP_ARG_ENCRYPTION_PWD; ynh_print_ON
 ssh_host=$YNH_APP_ARG_SSH_HOST
 ssh_port=$YNH_APP_ARG_SSH_PORT
 pub_key=$YNH_APP_ARG_PUB_KEY
@@ -43,9 +43,11 @@ fi
 
 if [ "$install_type" == "main" ]
 then
+	ynh_print_OFF
 	if [ $encrypt -eq 1 ]; then
 		test -n "$encryption_pwd" || ynh_die "encryption_pwd can't be empty if you choose a 'main server' installation with encryption."
 	fi
+	ynh_print_ON
 	test -n "$ssh_host" || ynh_die "ssh_host can't be empty if you choose a 'main server' installation."
 	test -n "$ssh_port" ||  ynh_die "ssh_port can't be empty if you choose a 'main server' installation."
 else
@@ -151,7 +153,7 @@ then
 
 	passkey="$final_path/send_process/passkey"
 	ynh_replace_string "pass_file=.*" "pass_file=$passkey" "$configfile"
-	echo "$encryption_pwd" > "$passkey"
+	ynh_print_OFF; echo "$encryption_pwd" > "$passkey"; ynh_print_ON
 	chmod 400 "$passkey"
 
 else
@@ -294,6 +296,7 @@ fi
 # SEND A README FOR THE ADMIN
 #=================================================
 
+ynh_print_OFF
 if [ $encrypt -eq 1 ]
 then
 	encrypt_infos="Your password for encryption is '$encryption_pwd'
@@ -337,3 +340,4 @@ For more informations about how to use this app, please read the readme https://
 If you facing an issue or want to improve this app, please open a new issue in this project: https://github.com/YunoHost-Apps/fallback_ynh"
 
 ynh_send_readme_to_admin "$message" "root"
+ynh_print_ON
