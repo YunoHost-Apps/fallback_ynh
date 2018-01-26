@@ -289,7 +289,7 @@ then
 	ynh_print_info "
 By default, no apps will be backuped for your fallback server. To select which apps you want to backup, please have a look at the app_list file in /home/yunohost.app/$app/app_list.
 Please take note of your public ssh key. This will be usefull during the installation on your fallback server." >&2
-	ynh_print_info $(cat "$pub_key") >&2
+	ynh_print_info "$(cat "$pub_key")" >&2
 fi
 
 #=================================================
