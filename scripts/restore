@@ -108,7 +108,7 @@ else
 		X11Forwarding no # Automatically added by $app" >> /etc/ssh/sshd_config
 
 		# Reload ssh service
-		systemctl reload ssh
+		ynh_system_reload ssh
 	fi
 fi
 
