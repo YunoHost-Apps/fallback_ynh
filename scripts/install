@@ -25,7 +25,12 @@ encrypt=$YNH_APP_ARG_ENCRYPT
 ynh_print_OFF; encryption_pwd=$YNH_APP_ARG_ENCRYPTION_PWD; ynh_print_ON
 ssh_host=$YNH_APP_ARG_SSH_HOST
 ssh_port=$YNH_APP_ARG_SSH_PORT
+
 pub_key=$YNH_APP_ARG_PUB_KEY
+auto_detect_failure=$YNH_APP_ARG_AUTO_DETECT_FAILURE
+delay_before_incident=$YNH_APP_ARG_DELAY_BEFORE_INCIDENT
+contact_mail=$YNH_APP_ARG_CONTACT_MAIL
+auto_deploy=$YNH_APP_ARG_AUTO_DEPLOY
 
 app=$YNH_APP_INSTANCE_NAME
 
@@ -69,6 +74,7 @@ then
 	ynh_app_setting_set $app ssh_port $ssh_port
 else
 	ynh_app_setting_set $app pub_key "$pub_key"
+	ynh_app_setting_set $app auto_detect_failure "$auto_detect_failure"
 fi
 
 #=================================================
@@ -124,7 +130,7 @@ then
 	ynh_replace_string "ssh_key=.*" "ssh_key=$ssh_key" "$configfile"
 
 	mkdir -p /root/.ssh
-	ssh-keyscan -t rsa $ssh_host >> /root/.ssh/known_hosts 2> /dev/null
+	ssh-keyscan -t rsa $ssh_host >> /root/.ssh/known_hosts
 
 	#=================================================
 	# FILL THE APPS LIST
@@ -182,8 +188,9 @@ else
 	# SET THE USER IN DEPLOY_FALLBACK SCRIPTS
 	#=================================================
 
-	ynh_replace_string "\(local_archive_dir=\"/home/\)USER" "\1$app" "$final_path/deploy_process/deploy_fallback.sh"
-	ynh_replace_string "\(local_archive_dir=\"/home/\)USER" "\1$app" "$final_path/deploy_process/close_fallback.sh"
+	ynh_replace_string "\(local_archive_dir=\"/home/\)fallback" "\1$app" "$final_path/deploy_process/deploy_fallback.sh"
+	ynh_replace_string "\(local_archive_dir=\"/home/\)fallback" "\1$app" "$final_path/deploy_process/close_fallback.sh"
+	ynh_replace_string "\(local_archive_dir=\"/home/\)fallback" "\1$app" "$final_path/deploy_process/auto_deploy_fallback.sh"
 
 	#=================================================
 	# SET A CHROOT FOR THE SSH USER
@@ -195,34 +202,34 @@ else
 	mkdir -p $chroot_dir/{bin,lib,lib64}
 
 	# Copy the ld-linux file, according to the architecture
-	ynh_exec_warn_less cp /lib/ld-linux.so.2 $chroot_dir/lib/ || true
-	ynh_exec_warn_less cp /lib64/ld-linux-x86-64.so.2 $chroot_dir/lib64/ || true
-	ynh_exec_warn_less cp /lib/ld-linux-armhf.so.3 $chroot_dir/lib/ || true
-
-	# Update the locate database
-	updatedb
-
-	# Declare functions to find and copy the binaries.
-	cp_which () {
-		cp `which $1` $chroot_dir/bin/$1
+	copy_ld-linux () {
+		! test -e "$1" || sudo cp "$1" "$chroot_dir/$2/"
 	}
-	locate_and_cp () {
-		local path_of_file=$(locate $1 | grep -v /home/ | head -n1)
-		cp $path_of_file $chroot_dir/lib/
+	copy_ld-linux /lib/ld-linux.so.2 lib
+	copy_ld-linux /lib64/ld-linux-x86-64.so.2 lib64
+	copy_ld-linux /lib/ld-linux-armhf.so.3 lib
+
+	# Copy binary and its libraries into the chroot.
+	ssh_chroot_copy_binary () {
+		# Find and copy the binary file
+		sudo cp `which $1` "$chroot_dir/bin/$(basename $1)"
+		# Then search for its libraries
+		while read lib_file
+		do
+			# Filter lib without path
+			if echo "$lib_file" | grep --quiet "=> /"
+			then
+				# Keep only the path of this lib
+				local lib_path=$(echo "$lib_file" | awk '{print $3}')
+				sudo cp $lib_path "$chroot_dir/lib/"
+			fi
+		done <<< "$(ldd `which $1`)"
 	}
 
 	# Copy bash in the chroot
-	cp_which bash
-	locate_and_cp libncurses.so.5
-	locate_and_cp libtinfo.so.5
-	locate_and_cp libdl.so.2
-	locate_and_cp libc.so.6
-
+	ssh_chroot_copy_binary bash
 	# Then rsync
-	cp_which rsync
-	locate_and_cp libattr.so.1
-	locate_and_cp libacl.so.1
-	locate_and_cp libpopt.so.0
+	ssh_chroot_copy_binary rsync
 
 	# Create the directory for rsync
 	mkdir -p $chroot_dir/backup
@@ -240,6 +247,44 @@ else
 
 	# Reload ssh service
 	ynh_system_reload ssh
+
+	#=================================================
+	# CONFIGURE AUTO DEPLOYMENT
+	#=================================================
+
+	# If failure auto detection is activated
+	if [ $auto_detect_failure -eq 1 ]
+	then
+		auto_check_config_file="$final_path/deploy_process/auto_check.conf"
+
+		# Convert delay_before_incident in minutes
+		case $delay_before_incident in
+			5min ) delay_before_incident=5; cron_delay="*/1 *" ;;
+			1h ) delay_before_incident=60; cron_delay="*/10 *" ;;
+			4h ) delay_before_incident=240; cron_delay="*/30 *" ;;
+			8h ) delay_before_incident=480; cron_delay="0 */1" ;;
+			12h ) delay_before_incident=720; cron_delay="0 */1" ;;
+			24h ) delay_before_incident=1440; cron_delay="0 */1" ;;
+		esac
+
+		# Fill the config file
+		ynh_replace_string "delay_before_incident=.*" "delay_before_incident=$delay_before_incident" "$auto_check_config_file"
+		# Send an email at root if there no email
+		if [ -z "$contact_mail" ]
+		then
+			ynh_print_info "Seems that you forgot to fill in a contact email address. root is going to be used instead."
+			contact_mail=root
+		fi
+		ynh_replace_string "contact_mail=.*" "contact_mail=$contact_mail" "$auto_check_config_file"
+		ynh_replace_string "auto_deploy=.*" "auto_deploy=$auto_deploy" "$auto_check_config_file"
+		ynh_replace_string "__FINAL_PATH__" "$final_path" "$auto_check_config_file"
+
+		# Put in place the cron file
+		ynh_replace_string "__FINAL_PATH__" "$final_path" "$final_path/deploy_process/auto_deploy_fallback.cron"
+		sudo cp $final_path/deploy_process/auto_deploy_fallback.cron /etc/cron.d/auto_deploy_fallback
+		# And configure it
+		ynh_replace_string "? ?" "$cron_delay" "/etc/cron.d/auto_deploy_fallback"
+	fi
 fi
 
 #=================================================
@@ -289,7 +334,7 @@ then
 	ynh_print_info "
 By default, no apps will be backuped for your fallback server. To select which apps you want to backup, please have a look at the app_list file in /home/yunohost.app/$app/app_list.
 Please take note of your public ssh key. This will be usefull during the installation on your fallback server." >&2
-	ynh_print_info $(cat "$pub_key") >&2
+	ynh_print_info "$(cat "$pub_key")" >&2
 fi
 
 #=================================================
@@ -331,6 +376,14 @@ Credentials for the ssh connexion from the other part of this app:
 - ssh_host: $domain$(hostname)
 - ssh_user: $app
 - ssh_port: $(grep "^Port " /etc/ssh/sshd_config | awk '{print $2}')"
+
+	if [ $auto_detect_failure -eq 1 ]
+	then
+		Informations="$Informations
+
+Failure auto detection is activated on this fallback. In case of failure of your main server, you should receive an email on $contact_mail to inform you.
+To modify the configuration related to this option, please have a look at $auto_check_config_file"
+	fi
 fi
 
 message="$Informations

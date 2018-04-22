@@ -29,6 +29,7 @@ app=$YNH_APP_INSTANCE_NAME
 
 install_type=$(ynh_app_setting_get $app install_type)
 final_path=$(ynh_app_setting_get $app final_path)
+auto_detect_failure=$(ynh_app_setting_get $app auto_detect_failure)
 
 #=================================================
 # STANDARD BACKUP STEPS
@@ -65,4 +66,13 @@ else
 	ynh_backup "/home/$app/lib"
 	ynh_backup "/home/$app/lib64"
 	ynh_backup "/home/$app/.ssh"
+
+	#=================================================
+	# BACKUP THE CRON FILE
+	#=================================================
+
+	if [ $auto_detect_failure -eq 1 ]
+	then
+		ynh_backup "/etc/cron.d/auto_deploy_fallback"
+	fi
 fi
