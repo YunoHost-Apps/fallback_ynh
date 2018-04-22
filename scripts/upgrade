@@ -20,12 +20,22 @@ encrypt=$(ynh_app_setting_get $app encrypt)
 final_path=$(ynh_app_setting_get $app final_path)
 ssh_host=$(ynh_app_setting_get $app ssh_host)
 ssh_port=$(ynh_app_setting_get $app ssh_port)
+auto_detect_failure=$(ynh_app_setting_get $app auto_detect_failure)
 
 #=================================================
 # CHECK VERSION
 #=================================================
 
 ynh_abort_if_up_to_date
+
+#=================================================
+# ENSURE DOWNWARD COMPATIBILITY
+#=================================================
+
+if [ -z $auto_detect_failure ]; then	# If auto_detect_failure setting doesn't exist
+	auto_detect_failure=0
+	ynh_app_setting_set $app auto_detect_failure $auto_detect_failure
+fi
 
 #=================================================
 # BACKUP BEFORE UPGRADE THEN ACTIVE TRAP
@@ -105,34 +115,34 @@ else
 	mkdir -p $chroot_dir/{bin,lib,lib64}
 
 	# Copy the ld-linux file, according to the architecture
-	ynh_exec_warn_less cp /lib/ld-linux.so.2 $chroot_dir/lib/ || true
-	ynh_exec_warn_less cp /lib64/ld-linux-x86-64.so.2 $chroot_dir/lib64/ || true
-	ynh_exec_warn_less cp /lib/ld-linux-armhf.so.3 $chroot_dir/lib/ || true
-
-	# Update the locate database
-	updatedb
-
-	# Declare functions to find and copy the binaries.
-	cp_which () {
-		cp `which $1` $chroot_dir/bin/$1
+	copy_ld-linux () {
+		! test -e "$1" || sudo cp "$1" "$chroot_dir/$2/"
 	}
-	locate_and_cp () {
-		local path_of_file=$(locate $1 | grep -v /home/ | head -n1)
-		cp $path_of_file $chroot_dir/lib/
+	copy_ld-linux /lib/ld-linux.so.2 lib
+	copy_ld-linux /lib64/ld-linux-x86-64.so.2 lib64
+	copy_ld-linux /lib/ld-linux-armhf.so.3 lib
+
+	# Copy binary and its libraries into the chroot.
+	ssh_chroot_copy_binary () {
+		# Find and copy the binary file
+		sudo cp `which $1` "$chroot_dir/bin/$(basename $1)"
+		# Then search for its libraries
+		while read lib_file
+		do
+			# Filter lib without path
+			if echo "$lib_file" | grep --quiet "=> /"
+			then
+				# Keep only the path of this lib
+				local lib_path=$(echo "$lib_file" | awk '{print $3}')
+				sudo cp $lib_path "$chroot_dir/lib/"
+			fi
+		done <<< "$(ldd `which $1`)"
 	}
 
 	# Copy bash in the chroot
-	cp_which bash
-	locate_and_cp libncurses.so.5
-	locate_and_cp libtinfo.so.5
-	locate_and_cp libdl.so.2
-	locate_and_cp libc.so.6
-
+	ssh_chroot_copy_binary bash
 	# Then rsync
-	cp_which rsync
-	locate_and_cp libattr.so.1
-	locate_and_cp libacl.so.1
-	locate_and_cp libpopt.so.0
+	ssh_chroot_copy_binary rsync
 
 	# Create the directory for rsync
 	mkdir -p $chroot_dir/backup
@@ -153,6 +163,16 @@ else
 		# Reload ssh service
 		ynh_system_reload ssh
 	fi
+
+	#=================================================
+	# CONFIGURE AUTO DEPLOYMENT
+	#=================================================
+
+	auto_check_config_file="$final_path/deploy_process/auto_check.conf"
+	ynh_replace_string "__FINAL_PATH__" "$final_path" "$auto_check_config_file"
+
+	# Configure the cron file
+	ynh_replace_string "__FINAL_PATH__" "$final_path" "$final_path/deploy_process/auto_deploy_fallback.cron"
 fi
 
 #=================================================

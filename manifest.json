@@ -6,7 +6,7 @@
 		"en": "Fallback server for YunoHost.",
 		"fr": "Serveur de secours pour YunoHost."
 	},
-	"version": "0.4~ynh2",
+	"version": "0.5~ynh2",
 	"url": "https://github.com/maniackcrudelis/Fallback-server",
 	"license": "GPL-3.0",
 	"maintainer": {
@@ -16,7 +16,7 @@
 	"requirements": {
 		"yunohost": ">= 2.7.2"
 	},
-	"multi_instance": true,
+	"multi_instance": false,
 	"services": [
 	],
 	"arguments": {
@@ -93,6 +93,54 @@
 					"fr": "La clé publique ssh vous sera fournie à la fin de l'installation du serveur principal."
 				},
 				"optional": true
+			},
+			{
+				"name": "auto_detect_failure",
+				"type": "boolean",
+				"ask": {
+					"en": "[fallback server only] Auto detect a failure of the main server ?",
+					"fr": "[fallback server seulement] Détection automatique d'une panne du serveur principal ?"
+				},
+				"default": true
+			},
+			{
+				"name": "delay_before_incident",
+				"ask": {
+					"en": "[fallback server only] Delay before declaring an incident with the main server.",
+					"fr": "[fallback server seulement] Délai avant de déclarer un incident avec le serveur principal."
+				},
+				"help": {
+					"en": "Only for failure auto detection.",
+					"fr": "Uniquement pour la détection automatique de panne."
+				},
+				"choices" : ["5min", "1h", "4h", "8h", "12h", "24h"],
+				"default": "1h",
+				"optional": true
+			},
+			{
+				"name": "contact_mail",
+				"ask": {
+					"en": "[fallback server only] Email address to contact in case of failure.",
+					"fr": "[fallback server seulement] Adresse e-mail à contacter en cas de panne."
+				},
+				"help": {
+					"en": "Only for failure auto detection.<br>Should be obviously an address on another server !",
+					"fr": "Uniquement pour la détection automatique de panne.<br>Devrait évidemment être une adresse sur un autre serveur !"
+				},
+				"optional": true
+			},
+			{
+				"name": "auto_deploy",
+				"type": "boolean",
+				"ask": {
+					"en": "[fallback server only] Deploy automatically the fallback in case of failure.",
+					"fr": "[fallback server seulement] Déployer automatiquement le fallback en cas de panne."
+				},
+				"help": {
+					"en": "Only for failure auto detection.",
+					"fr": "Uniquement pour la détection automatique de panne."
+				},
+				"default": false
 			}
 		]
 	}

@@ -1,5 +1,5 @@
-SOURCE_URL=https://github.com/maniackcrudelis/Fallback-server/archive/v0.4.tar.gz
-SOURCE_SUM=6f2c35cc217ca5840123fa8ae45ffd33
+SOURCE_URL=https://github.com/maniackcrudelis/Fallback-server/archive/v0.5.tar.gz
+SOURCE_SUM=a9170e6c4283e7bb7586be4318959c9e
 SOURCE_SUM_PRG=md5sum
 SOURCE_FORMAT=tar.gz
 SOURCE_IN_SUBDIR=true

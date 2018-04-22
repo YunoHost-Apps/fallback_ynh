@@ -64,7 +64,6 @@ then
 
 	sed -i "/$ssh_host/d" /root/.ssh/known_hosts
 
-	else
 	#=================================================
 	# REMOVE DEDICATED USER
 	#=================================================
@@ -80,6 +79,12 @@ then
 
 	# Reload ssh service
 	ynh_system_reload ssh
+else
+	#=================================================
+	# REMOVE THE CRON FILE
+	#=================================================
+
+	ynh_secure_remove "/etc/cron.d/auto_deploy_fallback"
 fi
 
 #=================================================

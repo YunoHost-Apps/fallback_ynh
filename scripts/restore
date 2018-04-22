@@ -32,6 +32,7 @@ final_path=$(ynh_app_setting_get $app final_path)
 ssh_host=$(ynh_app_setting_get $app ssh_host)
 ssh_port=$(ynh_app_setting_get $app ssh_port)
 pub_key=$(ynh_app_setting_get $app pub_key)
+auto_detect_failure=$(ynh_app_setting_get $app auto_detect_failure)
 
 #=================================================
 # CHECK IF THE APP CAN BE RESTORED
@@ -110,6 +111,15 @@ else
 		# Reload ssh service
 		ynh_system_reload ssh
 	fi
+
+	#=================================================
+	# RESTORE THE CRON FILE
+	#=================================================
+
+	if [ $auto_detect_failure -eq 1 ]
+	then
+		ynh_restore_file "/etc/cron.d/auto_deploy_fallback"
+	fi
 fi
 
 #=================================================
@@ -179,6 +189,14 @@ Credentials for the ssh connexion from the other part of this app:
 - ssh_host: $domain$(localhost)
 - ssh_user: $app
 - ssh_port: $(grep "^Port " /etc/ssh/sshd_config | awk '{print $2}')"
+
+	if [ $auto_detect_failure -eq 1 ]
+	then
+		Informations="$Informations
+
+Failure auto detection is activated on this fallback. In case of failure of your main server.
+To modify the configuration related to this option, please have a look at $final_path/deploy_process/auto_check.conf"
+	fi
 fi
 
 message="$Informations
