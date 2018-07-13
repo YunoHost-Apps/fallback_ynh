@@ -26,7 +26,7 @@ ynh_print_OFF; encryption_pwd=$YNH_APP_ARG_ENCRYPTION_PWD; ynh_print_ON
 ssh_host=$YNH_APP_ARG_SSH_HOST
 ssh_port=$YNH_APP_ARG_SSH_PORT
 
-pub_key=$YNH_APP_ARG_PUB_KEY
+pub_key="$YNH_APP_ARG_PUB_KEY"
 auto_detect_failure=$YNH_APP_ARG_AUTO_DETECT_FAILURE
 delay_before_incident=$YNH_APP_ARG_DELAY_BEFORE_INCIDENT
 contact_mail=$YNH_APP_ARG_CONTACT_MAIL
@@ -246,7 +246,7 @@ else
 	X11Forwarding no # Automatically added by $app" >> /etc/ssh/sshd_config
 
 	# Reload ssh service
-	ynh_system_reload ssh
+	ynh_system_reload --service_name=ssh
 
 	#=================================================
 	# CONFIGURE AUTO DEPLOYMENT
@@ -392,5 +392,5 @@ For more informations about how to use this app, please read the readme https://
 
 If you facing an issue or want to improve this app, please open a new issue in this project: https://github.com/YunoHost-Apps/fallback_ynh"
 
-ynh_send_readme_to_admin "$message" "root"
+ynh_send_readme_to_admin --app_message="$message" --recipients="root"
 ynh_print_ON

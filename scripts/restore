@@ -6,12 +6,7 @@
 # IMPORT GENERIC HELPERS
 #=================================================
 
-if [ ! -e _common.sh ]; then
-	# Get the _common.sh file if it's not in the current directory
-	cp ../settings/scripts/_common.sh ./_common.sh
-	chmod a+rx _common.sh
-fi
-source _common.sh
+source ../settings/scripts/_common.sh
 source /usr/share/yunohost/helpers
 
 #=================================================
@@ -31,7 +26,7 @@ install_type=$(ynh_app_setting_get $app install_type)
 final_path=$(ynh_app_setting_get $app final_path)
 ssh_host=$(ynh_app_setting_get $app ssh_host)
 ssh_port=$(ynh_app_setting_get $app ssh_port)
-pub_key=$(ynh_app_setting_get $app pub_key)
+pub_key="$(ynh_app_setting_get $app pub_key)"
 auto_detect_failure=$(ynh_app_setting_get $app auto_detect_failure)
 
 #=================================================
@@ -109,7 +104,7 @@ else
 		X11Forwarding no # Automatically added by $app" >> /etc/ssh/sshd_config
 
 		# Reload ssh service
-		ynh_system_reload ssh
+		ynh_system_reload --service_name=ssh
 	fi
 
 	#=================================================
@@ -169,7 +164,7 @@ then
 	Informations="By default, no apps will be backuped for your fallback server. To select which apps you want to backup, please have a look at the app_list file in /home/yunohost.app/$app/app_list.
 
 Please take note of your public ssh key. This will be usefull during the installation on your fallback server :
-$(cat "$pub_key")
+$pub_key
 
 Fallback is going to backup and send its backup every night.
 If you want to change the frequency, have a look to the file /etc/cron.d/$app.
@@ -186,7 +181,7 @@ else
 	Informations="This server is now your fallback, you should keep this server only for this purpose.
 
 Credentials for the ssh connexion from the other part of this app:
-- ssh_host: $domain$(localhost)
+- ssh_host: $domain$(hostname)
 - ssh_user: $app
 - ssh_port: $(grep "^Port " /etc/ssh/sshd_config | awk '{print $2}')"
 
@@ -205,4 +200,4 @@ For more informations about how to use this app, please read the readme https://
 
 If you facing an issue or want to improve this app, please open a new issue in this project: https://github.com/YunoHost-Apps/fallback_ynh"
 
-ynh_send_readme_to_admin "$message" "root"
+ynh_send_readme_to_admin --app_message="$message" --recipients="root"
