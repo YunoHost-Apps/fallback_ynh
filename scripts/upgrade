@@ -26,7 +26,7 @@ auto_detect_failure=$(ynh_app_setting_get $app auto_detect_failure)
 # CHECK VERSION
 #=================================================
 
-ynh_abort_if_up_to_date
+upgrade_type=$(ynh_check_app_version_changed)
 
 #=================================================
 # ENSURE DOWNWARD COMPATIBILITY
@@ -56,8 +56,11 @@ ynh_abort_if_errors
 # DOWNLOAD, CHECK AND UNPACK SOURCE
 #=================================================
 
-# Download, check integrity, uncompress and patch the source from app.src
-ynh_setup_source "$final_path"
+if [ "$upgrade_type" == "UPGRADE_APP" ]
+then
+	# Download, check integrity, uncompress and patch the source from app.src
+	ynh_setup_source "$final_path"
+fi
 
 #=================================================
 # SPECIFIC UPGRADE
@@ -71,14 +74,17 @@ then
 	# MODIFY THE CONFIG
 	#=================================================
 
-	configfile="$final_path/send_process/config.conf"
-	ynh_replace_string "ssh_user=.*" "ssh_user=$app" "$configfile"
-	ynh_replace_string "ssh_host=.*" "ssh_host=$ssh_host" "$configfile"
-	ynh_replace_string "ssh_port=.*" "ssh_port=$ssh_port" "$configfile"
+	if [ "$upgrade_type" == "UPGRADE_APP" ]
+	then
+		configfile="$final_path/send_process/config.conf"
+		ynh_replace_string "ssh_user=.*" "ssh_user=$app" "$configfile"
+		ynh_replace_string "ssh_host=.*" "ssh_host=$ssh_host" "$configfile"
+		ynh_replace_string "ssh_port=.*" "ssh_port=$ssh_port" "$configfile"
 
-	data_dir="/home/yunohost.app/$app/fallback_backup"
-	ynh_replace_string "main_storage_dir=.*" "main_storage_dir=$data_dir" "$configfile"
-	ynh_replace_string "encrypt=.*" "encrypt=$encrypt" "$configfile"
+		data_dir="/home/yunohost.app/$app/fallback_backup"
+		ynh_replace_string "main_storage_dir=.*" "main_storage_dir=$data_dir" "$configfile"
+		ynh_replace_string "encrypt=.*" "encrypt=$encrypt" "$configfile"
+	fi
 
 	#=================================================
 	# UPDATE THE CRON
@@ -102,8 +108,11 @@ else
 	# SET THE USER IN DEPLOY_FALLBACK SCRIPTS
 	#=================================================
 
-	ynh_replace_string "\(local_archive_dir=\"/home/\)USER" "\1$app" "$final_path/deploy_process/deploy_fallback.sh"
-	ynh_replace_string "\(local_archive_dir=\"/home/\)USER" "\1$app" "$final_path/deploy_process/close_fallback.sh"
+	if [ "$upgrade_type" == "UPGRADE_APP" ]
+	then
+		ynh_replace_string "\(local_archive_dir=\"/home/\)USER" "\1$app" "$final_path/deploy_process/deploy_fallback.sh"
+		ynh_replace_string "\(local_archive_dir=\"/home/\)USER" "\1$app" "$final_path/deploy_process/close_fallback.sh"
+	fi
 
 	#=================================================
 	# UPDATE THE CHROOT FOR THE SSH USER
@@ -161,18 +170,21 @@ else
 		X11Forwarding no # Automatically added by $app" >> /etc/ssh/sshd_config
 
 		# Reload ssh service
-		ynh_system_reload ssh
+		ynh_system_reload --service_name=ssh
 	fi
 
 	#=================================================
 	# CONFIGURE AUTO DEPLOYMENT
 	#=================================================
 
-	auto_check_config_file="$final_path/deploy_process/auto_check.conf"
-	ynh_replace_string "__FINAL_PATH__" "$final_path" "$auto_check_config_file"
+	if [ "$upgrade_type" == "UPGRADE_APP" ]
+	then
+		auto_check_config_file="$final_path/deploy_process/auto_check.conf"
+		ynh_replace_string "__FINAL_PATH__" "$final_path" "$auto_check_config_file"
 
-	# Configure the cron file
-	ynh_replace_string "__FINAL_PATH__" "$final_path" "$final_path/deploy_process/auto_deploy_fallback.cron"
+		# Configure the cron file
+		ynh_replace_string "__FINAL_PATH__" "$final_path" "$final_path/deploy_process/auto_deploy_fallback.cron"
+	fi
 fi
 
 #=================================================
