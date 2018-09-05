@@ -80,6 +80,7 @@ then
 		ynh_replace_string "ssh_user=.*" "ssh_user=$app" "$configfile"
 		ynh_replace_string "ssh_host=.*" "ssh_host=$ssh_host" "$configfile"
 		ynh_replace_string "ssh_port=.*" "ssh_port=$ssh_port" "$configfile"
+		ynh_replace_string "ssh_key=.*" "ssh_key=$final_path/send_process/ssh_key" "$configfile"
 
 		data_dir="/home/yunohost.app/$app/fallback_backup"
 		ynh_replace_string "main_storage_dir=.*" "main_storage_dir=$data_dir" "$configfile"
