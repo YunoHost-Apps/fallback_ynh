@@ -1,0 +1,203 @@
+#!/bin/bash
+
+#=================================================
+# GENERIC STARTING
+#=================================================
+# IMPORT GENERIC HELPERS
+#=================================================
+
+source _common.sh
+source /usr/share/yunohost/helpers
+
+#=================================================
+# RETRIEVE ARGUMENTS
+#=================================================
+
+app=${YNH_APP_INSTANCE_NAME:-$YNH_APP_ID}
+
+final_path=$(ynh_app_setting_get $app final_path)
+install_type=$(ynh_app_setting_get $app install_type)
+
+#=================================================
+# SPECIFIC CODE
+#=================================================
+# DECLARE GENERIC FUNCTION
+#=================================================
+
+config_file_main="$final_path/send_process/config.conf"
+config_file_fallback="$final_path/deploy_process/auto_check.conf"
+
+passkey="$final_path/send_process/passkey"
+
+get_config_value() {
+	option_name="$1"
+	config_file=$2
+	# Get the value of this option in the config file
+	grep "^$option_name=" "${!config_file}" 2> /dev/null | cut -d= -f2
+}
+
+#=================================================
+# LOAD VALUES
+#=================================================
+
+# Load the real value from the app config or elsewhere.
+# Then get the value from the form.
+# If the form has a value for a variable, take the value from the form,
+# Otherwise, keep the value from the app config.
+
+# Encryption
+old_encrypt="$(get_config_value encrypt config_file_main)"
+encrypt="${YNH_CONFIG_MAIN_SERVER_ENCRYPTION_ENCRYPT:-$old_encrypt}"
+encrypt=$(bool_to_true_false $encrypt)
+if [ -z "$encrypt" ]; then
+	encrypt=false
+fi
+# Encryption password
+ynh_print_OFF
+old_encrypt_password="$(cat $passkey 2> /dev/null)"
+encrypt_password="${YNH_CONFIG_MAIN_SERVER_ENCRYPTION_ENCRYPTION_PWD:-$old_encrypt_password}"
+ynh_print_ON
+
+# ssh_host
+old_ssh_host="$(get_config_value ssh_host config_file_main)"
+ssh_host="${YNH_CONFIG_MAIN_SERVER_SSH_CONFIG_SSH_HOST:-$old_ssh_host}"
+# ssh_port
+old_ssh_port="$(get_config_value ssh_port config_file_main)"
+ssh_port="${YNH_CONFIG_MAIN_SERVER_SSH_CONFIG_SSH_PORT:-$old_ssh_port}"
+
+# pub_key
+old_pub_key="$(ynh_app_setting_get $app pub_key)"
+pub_key="${YNH_CONFIG_FALLBACK_SERVER_SSH_CONFIG_PUB_KEY:-$old_pub_key}"
+# auto_detect_failure
+old_auto_detect_failure=$(ynh_app_setting_get $app auto_detect_failure)
+auto_detect_failure="${YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_AUTO_DETECT_FAILURE:-$old_auto_detect_failure}"
+auto_detect_failure=$(bool_to_true_false $auto_detect_failure)
+if [ -z "$auto_detect_failure" ]; then
+	auto_detect_failure=false
+fi
+# delay_before_incident
+old_delay_before_incident="$(get_config_value delay_before_incident config_file_fallback)"
+delay_before_incident="${YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_DELAY_BEFORE_INCIDENT:-$old_delay_before_incident}"
+# contact_mail
+old_contact_mail="$(get_config_value contact_mail config_file_fallback)"
+contact_mail="${YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_CONTACT_MAIL:-$old_contact_mail}"
+# auto_deploy
+old_auto_deploy="$(get_config_value auto_deploy config_file_fallback)"
+auto_deploy="${YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_AUTO_DEPLOY:-$old_auto_deploy}"
+auto_deploy=$(bool_to_true_false $auto_deploy)
+if [ -z "$auto_deploy" ]; then
+	auto_deploy=false
+fi
+
+#=================================================
+# SHOW_CONFIG FUNCTION FOR 'SHOW' COMMAND
+#=================================================
+
+show_config() {
+	# here you are supposed to read some config file/database/other then print the values
+	# echo "YNH_CONFIG_${PANEL_ID}_${SECTION_ID}_${OPTION_ID}=value"
+	echo "YNH_CONFIG_MAIN_SERVER_ENCRYPTION_ENCRYPT=$encrypt"
+	echo "YNH_CONFIG_MAIN_SERVER_ENCRYPTION_ENCRYPTION_PWD="
+
+	echo "YNH_CONFIG_MAIN_SERVER_SSH_CONFIG_SSH_HOST=$ssh_host"
+	echo "YNH_CONFIG_MAIN_SERVER_SSH_CONFIG_SSH_PORT=$ssh_port"
+
+
+	echo "YNH_CONFIG_FALLBACK_SERVER_SSH_CONFIG_PUB_KEY=$pub_key"
+	echo "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_AUTO_DETECT_FAILURE=$auto_detect_failure"
+	echo "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_DELAY_BEFORE_INCIDENT=$delay_before_incident"
+	echo "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_CONTACT_MAIL=$contact_mail"
+	echo "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_AUTO_DEPLOY=$auto_deploy"
+}
+
+#=================================================
+# MODIFY THE CONFIGURATION
+#=================================================
+
+apply_config() {
+	if [ "$install_type" = "main" ]
+	then
+		# Change the password if needed
+		if [ "$encrypt" = "true" ]
+		then
+			ynh_print_OFF
+			test -n "$encrypt_password" || ynh_die "The password for encryption can't be empty if you choose to enable encryption."
+			ynh_print_ON
+			# Replace the password by the previous one
+			passkey="$final_path/send_process/passkey"
+			ynh_print_OFF; echo "$encrypt_password" > "$passkey"; ynh_print_ON
+			chmod 400 "$passkey"
+			ynh_replace_string "^pass_file=.*" "pass_file=$passkey" "$config_file_main"
+		fi
+
+		encrypt=$(bool_to_01 $encrypt)
+
+		# Change encrypt in the config file
+		ynh_replace_string "^encrypt=.*" "encrypt=$encrypt" "$config_file_main"
+
+		# Change ssh_host in the config file
+		ynh_replace_string "^ssh_host=.*" "ssh_host=$ssh_host" "$config_file_main"
+		# Change ssh_port in the config file
+		ynh_replace_string "^ssh_port=.*" "ssh_port=$ssh_port" "$config_file_main"
+
+	else
+		# Add the public ssh key to authorized_keys
+		# Secure the ssh key
+		pub_key="no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty $pub_key"
+		# Then add the key
+		grep --quiet "$pub_key" "/home/$app/.ssh/authorized_keys" || \
+			echo "$pub_key" >> "/home/$app/.ssh/authorized_keys"
+
+		# Change auto_detect_failure feature
+		if [ "$auto_detect_failure" = "true" ] && [ "$old_auto_detect_failure" = "0" ]
+		then
+			# Put in place the cron file
+			ynh_replace_string "__FINAL_PATH__" "$final_path" "$final_path/deploy_process/auto_deploy_fallback.cron"
+			cp $final_path/deploy_process/auto_deploy_fallback.cron /etc/cron.d/auto_deploy_fallback
+			ynh_app_setting_set $app auto_detect_failure 1
+		elif [ "$auto_detect_failure" = "false" ] && [ "$old_auto_detect_failure" = "1" ]
+		then
+			rm "/etc/cron.d/auto_deploy_fallback"
+			ynh_app_setting_set $app auto_detect_failure 0
+		fi
+		# Change delay_before_incident in the config file
+		ynh_replace_string "^delay_before_incident=.*" "delay_before_incident=$delay_before_incident" "$config_file_fallback"
+		ynh_app_setting_set $app delay_before_incident "$delay_before_incident"
+
+		if [ $delay_before_incident -le 5 ]
+		then
+			cron_delay="*/1 *"
+		elif [ $delay_before_incident -le 60 ]
+		then
+			cron_delay="*/10 *"
+		elif [ $delay_before_incident -le 240 ]
+		then
+			cron_delay="*/30 *"
+		else
+			cron_delay="0 */1"
+		fi
+		# Reconfigure the cron file
+		if [ -e "/etc/cron.d/auto_deploy_fallback" ]
+		then
+			ynh_replace_string "^.* root" "$cron_delay * * * root" "/etc/cron.d/auto_deploy_fallback"
+		fi
+		# Change contact_mail in the config file
+		ynh_replace_string "^contact_mail=.*" "contact_mail=$contact_mail" "$config_file_fallback"
+		ynh_app_setting_set $app contact_mail "$contact_mail"
+		auto_deploy=$(bool_to_01 $auto_deploy)
+		# Change auto_deploy in the config file
+		ynh_replace_string "^auto_deploy=.*" "auto_deploy=$auto_deploy" "$config_file_fallback"
+		ynh_app_setting_set $app auto_deploy "$auto_deploy"
+	fi
+}
+
+#=================================================
+# GENERIC FINALIZATION
+#=================================================
+# SELECT THE ACTION FOLLOWING THE GIVEN ARGUMENT
+#=================================================
+
+case $1 in
+  show) show_config;;
+  apply) apply_config;;
+esac

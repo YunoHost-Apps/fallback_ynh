@@ -75,6 +75,9 @@ then
 else
 	ynh_app_setting_set $app pub_key "$pub_key"
 	ynh_app_setting_set $app auto_detect_failure "$auto_detect_failure"
+	ynh_app_setting_set $app delay_before_incident "$delay_before_incident"
+	ynh_app_setting_set $app contact_mail "$contact_mail"
+	ynh_app_setting_set $app auto_deploy "$auto_deploy"
 fi
 
 #=================================================
@@ -110,6 +113,7 @@ then
 	#=================================================
 
 	configfile="$final_path/send_process/config.conf"
+	cp "${configfile}.modele" "$configfile"
 	ynh_replace_string "ssh_user=.*" "ssh_user=$app" "$configfile"
 	ynh_replace_string "ssh_host=.*" "ssh_host=$ssh_host" "$configfile"
 	ynh_replace_string "ssh_port=.*" "ssh_port=$ssh_port" "$configfile"
@@ -161,6 +165,13 @@ then
 	ynh_replace_string "pass_file=.*" "pass_file=$passkey" "$configfile"
 	ynh_print_OFF; echo "$encryption_pwd" > "$passkey"; ynh_print_ON
 	chmod 400 "$passkey"
+
+	#=================================================
+	# STORE A CHECKSUM OF THIS CONFIG FILE
+	#=================================================
+
+	# Calculate and store the config file checksum into the app settings
+	ynh_store_file_checksum "$configfile"
 
 else
 	#=================================================
@@ -252,11 +263,12 @@ else
 	# CONFIGURE AUTO DEPLOYMENT
 	#=================================================
 
+	auto_check_config_file="$final_path/deploy_process/auto_check.conf"
+	cp "${auto_check_config_file}.modele" "$auto_check_config_file"
+
 	# If failure auto detection is activated
 	if [ $auto_detect_failure -eq 1 ]
 	then
-		auto_check_config_file="$final_path/deploy_process/auto_check.conf"
-
 		# Convert delay_before_incident in minutes
 		case $delay_before_incident in
 			5min ) delay_before_incident=5; cron_delay="*/1 *" ;;
@@ -274,6 +286,7 @@ else
 		then
 			ynh_print_info "Seems that you forgot to fill in a contact email address. root is going to be used instead."
 			contact_mail=root
+			ynh_app_setting_set $app contact_mail "$contact_mail"
 		fi
 		ynh_replace_string "contact_mail=.*" "contact_mail=$contact_mail" "$auto_check_config_file"
 		ynh_replace_string "auto_deploy=.*" "auto_deploy=$auto_deploy" "$auto_check_config_file"
@@ -285,6 +298,13 @@ else
 		# And configure it
 		ynh_replace_string "? ?" "$cron_delay" "/etc/cron.d/auto_deploy_fallback"
 	fi
+
+	#=================================================
+	# STORE A CHECKSUM OF THIS CONFIG FILE
+	#=================================================
+
+	# Calculate and store the config file checksum into the app settings
+	ynh_store_file_checksum "$auto_check_config_file"
 fi
 
 #=================================================
