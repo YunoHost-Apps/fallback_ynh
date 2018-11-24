@@ -12,7 +12,7 @@ Si vous n'avez pas YunoHost, merci de regarder [ici](https://yunohost.org/#/inst
 Fallback est une application spéciale, uniquement en ligne de commande, qui vous donne le moyen de disposer d'un second serveur que vous pourrez utiliser si le premier tombe en panne.  
 Cet autre serveur va vous permettre de déployer une copie de votre serveur pour retrouver vos services internet durant la panne.
 
-**Version embarquée:** 0.6
+**Version embarquée:** 0.7
 
 ## Captures d'écran
 
@@ -37,9 +37,9 @@ Non applicable.
 
 #### Architectures supportées.
 
-* x86-64b - [![Build Status](https://ci-apps.yunohost.org/jenkins/job/fallback%20(Community)/badge/icon)](https://ci-apps.yunohost.org/jenkins/job/fallback%20(Community)/)
-* ARMv8-A - [![Build Status](https://ci-apps-arm.yunohost.org/jenkins/job/fallback%20(Community)%20(%7EARM%7E)/badge/icon)](https://ci-apps-arm.yunohost.org/jenkins/job/fallback%20(Community)%20(%7EARM%7E)/)
-* Jessie x86-64b - [![Build Status](https://ci-stretch.nohost.me/jenkins/job/fallback%20(Community)/badge/icon)](https://ci-stretch.nohost.me/jenkins/job/fallback%20(Community)/)
+* x86-64b - ![](https://ci-apps.yunohost.org/ci/logs/fallback%20%28Community%29.svg)
+* ARMv8-A - ![](https://ci-apps-arm.yunohost.org/ci/logs/fallback%20%28Community%29.svg)
+* Jessie x86-64b - ![](https://ci-stretch.nohost.me/ci/logs/fallback%20%28Community%29.svg)
 
 ## Limitations
 
