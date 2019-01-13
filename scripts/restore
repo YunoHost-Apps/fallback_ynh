@@ -8,6 +8,8 @@
 
 source ../settings/scripts/_common.sh
 source /usr/share/yunohost/helpers
+# Load common variables for all scripts.
+source ../settings/scripts/_variables
 
 #=================================================
 # MANAGE SCRIPT FAILURE
@@ -51,7 +53,7 @@ ynh_restore_file "$final_path"
 #=================================================
 
 # Define and install dependencies
-ynh_install_app_dependencies ccrypt rsync mlocate
+ynh_install_app_dependencies $app_depencencies
 
 if [ "$install_type" == "main" ]
 then
@@ -104,7 +106,7 @@ else
 		X11Forwarding no # Automatically added by $app" >> /etc/ssh/sshd_config
 
 		# Reload ssh service
-		ynh_system_reload --service_name=ssh
+		ynh_systemd_action --action=reload --service_name=ssh
 	fi
 
 	#=================================================
