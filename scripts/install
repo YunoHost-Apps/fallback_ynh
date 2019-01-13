@@ -12,7 +12,7 @@ source /usr/share/yunohost/helpers
 source _variables
 
 #=================================================
-# MANAGE SCRIPT FAILURE
+# MANAGE FAILURE OF THE SCRIPT
 #=================================================
 
 # Exit if an error occurs during the execution of the script
@@ -283,7 +283,7 @@ else
 
 		# Fill the config file
 		ynh_replace_string "delay_before_incident=.*" "delay_before_incident=$delay_before_incident" "$auto_check_config_file"
-		# Send an email at root if there no email
+		# Send email at root if there no email
 		if [ -z "$contact_mail" ]
 		then
 			ynh_print_info "Seems that you forgot to fill in a contact email address. root is going to be used instead."
@@ -410,9 +410,9 @@ fi
 
 message="$Informations
 
-For more informations about how to use this app, please read the readme https://github.com/YunoHost-Apps/fallback_ynh/blob/master/README.md#how-it-works.
+For more information about how to use this app, please read the readme https://github.com/YunoHost-Apps/fallback_ynh/blob/master/README.md#how-it-works.
 
-If you facing an issue or want to improve this app, please open a new issue in this project: https://github.com/YunoHost-Apps/fallback_ynh"
+If you're facing an issue or want to improve this app, please open a new issue in this project: https://github.com/YunoHost-Apps/fallback_ynh"
 
 ynh_send_readme_to_admin --app_message="$message" --recipients="root"
 ynh_print_ON

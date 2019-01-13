@@ -66,7 +66,7 @@ then
 	ssh-keyscan -t rsa $ssh_host >> /root/.ssh/known_hosts 2> /dev/null
 
 	#=================================================
-	# RESTORE LOGROTATE
+	# RESTORE THE LOGROTATE CONFIGURATION
 	#=================================================
 
 	ynh_restore_file "/etc/logrotate.d/$app"
@@ -198,8 +198,8 @@ fi
 
 message="$Informations
 
-For more informations about how to use this app, please read the readme https://github.com/YunoHost-Apps/fallback_ynh/blob/master/README.md#how-it-works.
+For more information about how to use this app, please read the readme https://github.com/YunoHost-Apps/fallback_ynh/blob/master/README.md#how-it-works.
 
-If you facing an issue or want to improve this app, please open a new issue in this project: https://github.com/YunoHost-Apps/fallback_ynh"
+If you're facing an issue or want to improve this app, please open a new issue in this project: https://github.com/YunoHost-Apps/fallback_ynh"
 
 ynh_send_readme_to_admin --app_message="$message" --recipients="root"
