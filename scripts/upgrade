@@ -22,6 +22,7 @@ encrypt=$(ynh_app_setting_get $app encrypt)
 final_path=$(ynh_app_setting_get $app final_path)
 ssh_host=$(ynh_app_setting_get $app ssh_host)
 ssh_port=$(ynh_app_setting_get $app ssh_port)
+pub_key="$(ynh_app_setting_get $app pub_key)"
 auto_detect_failure=$(ynh_app_setting_get $app auto_detect_failure)
 
 # Optional parameters from config-panel feature
@@ -269,3 +270,56 @@ then
 	# Use logrotate to manage application logfile(s)
 	ynh_use_logrotate --non-append
 fi
+
+#=================================================
+# SEND A README FOR THE ADMIN
+#=================================================
+
+# Get main domain and buid the url of the admin panel of the app.
+admin_panel="https://$(grep portal_domain /etc/ssowat/conf.json | cut -d'"' -f4)/yunohost/admin/#/apps/$app"
+
+if [ "$install_type" == "main" ]
+then
+	Informations="By default, no apps will be backuped for your fallback server. To select which apps you want to backup, please have a look at the app_list file in /home/yunohost.app/$app/app_list.
+
+Please take note of your public ssh key. This will be usefull during the installation on your fallback server :
+$pub_key
+
+Fallback is going to backup and send its backup every night.
+If you want to change the frequency, have a look to the file /etc/cron.d/$app.
+
+You can also find a config file at /home/yunohost.app/fallback/config.conf"
+else
+	domain=$(yunohost domain list | grep -m1 "-" | awk '{print $2}')
+	if [ -n "$domain" ]
+	then
+		domain="$domain or "
+	else
+		domain=""
+	fi
+	Informations="This server is now your fallback, you should keep this server only for this purpose.
+
+Credentials for the ssh connexion from the other part of this app:
+- ssh_host: $domain$(hostname)
+- ssh_user: $app
+- ssh_port: $(grep "^Port " /etc/ssh/sshd_config | awk '{print $2}')"
+
+	if [ $auto_detect_failure -eq 1 ]
+	then
+		Informations="$Informations
+
+Failure auto detection is activated on this fallback. In case of failure of your main server.
+To modify the configuration related to this option, please have a look at $final_path/deploy_process/auto_check.conf"
+	fi
+fi
+
+message="$Informations
+
+For more information about how to use this app, please read the readme https://github.com/YunoHost-Apps/fallback_ynh/blob/master/README.md#how-it-works.
+
+You can configure this app easily by using the experimental config-panel feature: $admin_panel/config-panel.
+You can also find some specific actions for this app by using the experimental action feature: $admin_panel/actions.
+
+If you're facing an issue or want to improve this app, please open a new issue in this project: https://github.com/YunoHost-Apps/fallback_ynh"
+
+ynh_send_readme_to_admin --app_message="$message" --recipients="root" --type="upgrade"
