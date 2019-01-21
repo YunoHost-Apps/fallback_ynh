@@ -8,6 +8,8 @@
 
 source ../settings/scripts/_common.sh
 source /usr/share/yunohost/helpers
+# Load common variables for all scripts.
+source ../settings/scripts/_variables
 
 #=================================================
 # MANAGE SCRIPT FAILURE
@@ -51,7 +53,7 @@ ynh_restore_file "$final_path"
 #=================================================
 
 # Define and install dependencies
-ynh_install_app_dependencies ccrypt rsync mlocate
+ynh_install_app_dependencies $app_depencencies
 
 if [ "$install_type" == "main" ]
 then
@@ -64,7 +66,7 @@ then
 	ssh-keyscan -t rsa $ssh_host >> /root/.ssh/known_hosts 2> /dev/null
 
 	#=================================================
-	# RESTORE LOGROTATE
+	# RESTORE THE LOGROTATE CONFIGURATION
 	#=================================================
 
 	ynh_restore_file "/etc/logrotate.d/$app"
@@ -104,7 +106,7 @@ else
 		X11Forwarding no # Automatically added by $app" >> /etc/ssh/sshd_config
 
 		# Reload ssh service
-		ynh_system_reload --service_name=ssh
+		ynh_systemd_action --action=reload --service_name=ssh
 	fi
 
 	#=================================================
@@ -159,6 +161,9 @@ fi
 # SEND A README FOR THE ADMIN
 #=================================================
 
+# Get main domain and buid the url of the admin panel of the app.
+admin_panel="https://$(grep portal_domain /etc/ssowat/conf.json | cut -d'"' -f4)/yunohost/admin/#/apps/$app"
+
 if [ "$install_type" == "main" ]
 then
 	Informations="By default, no apps will be backuped for your fallback server. To select which apps you want to backup, please have a look at the app_list file in /home/yunohost.app/$app/app_list.
@@ -196,8 +201,11 @@ fi
 
 message="$Informations
 
-For more informations about how to use this app, please read the readme https://github.com/YunoHost-Apps/fallback_ynh/blob/master/README.md#how-it-works.
+For more information about how to use this app, please read the readme https://github.com/YunoHost-Apps/fallback_ynh/blob/master/README.md#how-it-works.
 
-If you facing an issue or want to improve this app, please open a new issue in this project: https://github.com/YunoHost-Apps/fallback_ynh"
+You can configure this app easily by using the experimental config-panel feature: $admin_panel/config-panel.
+You can also find some specific actions for this app by using the experimental action feature: $admin_panel/actions.
 
-ynh_send_readme_to_admin --app_message="$message" --recipients="root"
+If you're facing an issue or want to improve this app, please open a new issue in this project: https://github.com/YunoHost-Apps/fallback_ynh"
+
+ynh_send_readme_to_admin --app_message="$message" --recipients="root" --type="restore"

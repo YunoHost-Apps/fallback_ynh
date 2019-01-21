@@ -8,9 +8,11 @@
 
 source _common.sh
 source /usr/share/yunohost/helpers
+# Load common variables for all scripts.
+source _variables
 
 #=================================================
-# MANAGE SCRIPT FAILURE
+# MANAGE FAILURE OF THE SCRIPT
 #=================================================
 
 # Exit if an error occurs during the execution of the script
@@ -86,7 +88,7 @@ fi
 # INSTALL DEPENDENCIES
 #=================================================
 
-ynh_install_app_dependencies ccrypt rsync mlocate
+ynh_install_app_dependencies $app_depencencies
 
 #=================================================
 # DOWNLOAD, CHECK AND UNPACK SOURCE
@@ -257,7 +259,7 @@ else
 	X11Forwarding no # Automatically added by $app" >> /etc/ssh/sshd_config
 
 	# Reload ssh service
-	ynh_system_reload --service_name=ssh
+	ynh_systemd_action --action=reload --service_name=ssh
 
 	#=================================================
 	# CONFIGURE AUTO DEPLOYMENT
@@ -281,7 +283,7 @@ else
 
 		# Fill the config file
 		ynh_replace_string "delay_before_incident=.*" "delay_before_incident=$delay_before_incident" "$auto_check_config_file"
-		# Send an email at root if there no email
+		# Send email at root if there no email
 		if [ -z "$contact_mail" ]
 		then
 			ynh_print_info "Seems that you forgot to fill in a contact email address. root is going to be used instead."
@@ -361,6 +363,9 @@ fi
 # SEND A README FOR THE ADMIN
 #=================================================
 
+# Get main domain and buid the url of the admin panel of the app.
+admin_panel="https://$(grep portal_domain /etc/ssowat/conf.json | cut -d'"' -f4)/yunohost/admin/#/apps/$app"
+
 ynh_print_OFF
 if [ $encrypt -eq 1 ]
 then
@@ -408,9 +413,12 @@ fi
 
 message="$Informations
 
-For more informations about how to use this app, please read the readme https://github.com/YunoHost-Apps/fallback_ynh/blob/master/README.md#how-it-works.
+For more information about how to use this app, please read the readme https://github.com/YunoHost-Apps/fallback_ynh/blob/master/README.md#how-it-works.
 
-If you facing an issue or want to improve this app, please open a new issue in this project: https://github.com/YunoHost-Apps/fallback_ynh"
+You can configure this app easily by using the experimental config-panel feature: $admin_panel/config-panel.
+You can also find some specific actions for this app by using the experimental action feature: $admin_panel/actions.
 
-ynh_send_readme_to_admin --app_message="$message" --recipients="root"
+If you're facing an issue or want to improve this app, please open a new issue in this project: https://github.com/YunoHost-Apps/fallback_ynh"
+
+ynh_send_readme_to_admin --app_message="$message" --recipients="root" --type="install"
 ynh_print_ON
