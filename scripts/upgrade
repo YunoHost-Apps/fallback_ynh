@@ -14,6 +14,7 @@ source _variables
 #=================================================
 # LOAD SETTINGS
 #=================================================
+ynh_script_progression --message="Load settings" --weight=4
 
 app=$YNH_APP_INSTANCE_NAME
 
@@ -39,6 +40,7 @@ upgrade_type=$(ynh_check_app_version_changed)
 #=================================================
 # ENSURE DOWNWARD COMPATIBILITY
 #=================================================
+ynh_script_progression --message="Ensure downward compatibility"
 
 if [ "$install_type" == "fallback" ]
 then
@@ -67,6 +69,7 @@ fi
 #=================================================
 # BACKUP BEFORE UPGRADE THEN ACTIVE TRAP
 #=================================================
+ynh_script_progression --message="Backup the app before upgrading" --weight=5
 
 # Backup the current version of the app
 ynh_backup_before_upgrade
@@ -85,6 +88,7 @@ ynh_abort_if_errors
 
 if [ "$upgrade_type" == "UPGRADE_APP" ]
 then
+	ynh_script_progression --message="Download, check and unpack source" --weight=2
 	# Download, check integrity, uncompress and patch the source from app.src
 	ynh_setup_source "$final_path"
 fi
@@ -92,6 +96,7 @@ fi
 #=================================================
 # UPGRADE DEPENDENCIES
 #=================================================
+ynh_script_progression --message="Upgrade dependencies" --weight=9
 
 ynh_install_app_dependencies $app_depencencies
 
@@ -109,6 +114,7 @@ then
 
 	if [ "$upgrade_type" == "UPGRADE_APP" ]
 	then
+		ynh_script_progression --message="Reconfigure Fallback"
 		configfile="$final_path/send_process/config.conf"
 		ynh_replace_string "ssh_user=.*" "ssh_user=$app" "$configfile"
 		ynh_replace_string "ssh_host=.*" "ssh_host=$ssh_host" "$configfile"
@@ -123,6 +129,7 @@ then
 	#=================================================
 	# UPDATE THE CRON
 	#=================================================
+	ynh_script_progression --message="Update the cron"
 
 	echo "0 1 * * * root \"$final_path/send_process/send_backup.sh\" > /dev/null" > /etc/cron.d/$app
 
@@ -135,6 +142,7 @@ else
 
 	if ! ynh_system_user_exists "$app"
 	then
+		ynh_script_progression --message="Create a dedicated user"
 		useradd -d "/home/$app" --system --user-group $app --shell /bin/bash
 	fi
 
@@ -151,6 +159,7 @@ else
 	#=================================================
 	# UPDATE THE CHROOT FOR THE SSH USER
 	#=================================================
+	ynh_script_progression --message="Update the chroot for the ssh user"
 
 	chroot_dir="/home/$app"
 
@@ -213,6 +222,7 @@ else
 
 	if [ "$upgrade_type" == "UPGRADE_APP" ]
 	then
+		ynh_script_progression --message="Configure auto deployment"
 		auto_check_config_file="$final_path/deploy_process/auto_check.conf"
 		ynh_replace_string "__FINAL_PATH__" "$final_path" "$auto_check_config_file"
 
@@ -266,6 +276,7 @@ then
 	#=================================================
 	# SETUP LOGROTATE
 	#=================================================
+	ynh_script_progression --message="Reconfigure logrotate" --weight=2
 
 	# Use logrotate to manage application logfile(s)
 	ynh_use_logrotate --non-append
@@ -323,3 +334,9 @@ You can also find some specific actions for this app by using the experimental a
 If you're facing an issue or want to improve this app, please open a new issue in this project: https://github.com/YunoHost-Apps/fallback_ynh"
 
 ynh_send_readme_to_admin --app_message="$message" --recipients="root" --type="upgrade"
+
+#=================================================
+# END OF SCRIPT
+#=================================================
+
+ynh_script_progression --message="Upgrade completed" --last

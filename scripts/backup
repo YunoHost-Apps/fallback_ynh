@@ -19,6 +19,7 @@ ynh_abort_if_errors
 #=================================================
 # LOAD SETTINGS
 #=================================================
+ynh_script_progression --message="Load settings" --weight=3
 
 app=$YNH_APP_INSTANCE_NAME
 
@@ -31,6 +32,7 @@ auto_detect_failure=$(ynh_app_setting_get $app auto_detect_failure)
 #=================================================
 # BACKUP THE APP MAIN DIR
 #=================================================
+ynh_script_progression --message="Backup the app main dir"
 
 ynh_backup "$final_path"
 
@@ -44,18 +46,21 @@ then
 	#=================================================
 	# BACKUP LOGROTATE
 	#=================================================
+	ynh_script_progression --message="Backup logrotate configuration"
 
 	ynh_backup "/etc/logrotate.d/$app"
 
 	#=================================================
 	# BACKUP THE CRON FILE
 	#=================================================
+	ynh_script_progression --message="Backup cron file"
 
 	ynh_backup "/etc/cron.d/$app"
 else
 	#=================================================
 	# BACKUP USER DIRECTORIES
 	#=================================================
+	ynh_script_progression --message="Backup user directories"
 
 	ynh_backup "/home/$app/bin"
 	ynh_backup "/home/$app/lib"
@@ -68,6 +73,13 @@ else
 
 	if [ $auto_detect_failure -eq 1 ]
 	then
+		ynh_script_progression --message="Backup cron file"
 		ynh_backup "/etc/cron.d/auto_deploy_fallback"
 	fi
 fi
+
+#=================================================
+# END OF SCRIPT
+#=================================================
+
+ynh_script_progression --message="Backup completed" --last

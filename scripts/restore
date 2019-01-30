@@ -21,6 +21,7 @@ ynh_abort_if_errors
 #=================================================
 # LOAD SETTINGS
 #=================================================
+ynh_script_progression --message="Load settings" --weight=3
 
 app=$YNH_APP_INSTANCE_NAME
 
@@ -43,6 +44,7 @@ test ! -d $final_path \
 #=================================================
 # RESTORE THE APP MAIN DIR
 #=================================================
+ynh_script_progression --message="Restore the app main directory"
 
 ynh_restore_file "$final_path"
 
@@ -51,6 +53,7 @@ ynh_restore_file "$final_path"
 #=================================================
 # REINSTALL DEPENDENCIES
 #=================================================
+ynh_script_progression --message="Reinstall dependencies" --weight=9
 
 # Define and install dependencies
 ynh_install_app_dependencies $app_depencencies
@@ -61,6 +64,7 @@ then
 	#=================================================
 	# ADD THE HOST TO THE KNOWN HOST LIST
 	#=================================================
+	ynh_script_progression --message="Add the host to the known host list" --weight=3
 
 	mkdir -p /root/.ssh
 	ssh-keyscan -t rsa $ssh_host >> /root/.ssh/known_hosts 2> /dev/null
@@ -84,12 +88,14 @@ else
 
 	if ! ynh_system_user_exists "$app"
 	then
+		ynh_script_progression --message="Recreate the dedicated user"
 		useradd -d "/home/$app" --system --user-group $app --shell /bin/bash
 	fi
 
 	#=================================================
 	# RESTORE USER DIRECTORIES
 	#=================================================
+	ynh_script_progression --message="Restore user directories" --weight=2
 
 	ynh_restore_file "/home/$app/bin"
 	ynh_restore_file "/home/$app/lib"
@@ -99,6 +105,8 @@ else
 	# Update the ssh config
 	if ! grep "# Automatically added by $app" /etc/ssh/sshd_config
 	then
+		ynh_script_progression --message="Update the ssh config"
+
 		echo "
 		Match User $app # Automatically added by $app
 		ChrootDirectory /home/%u # Automatically added by $app
@@ -209,3 +217,9 @@ You can also find some specific actions for this app by using the experimental a
 If you're facing an issue or want to improve this app, please open a new issue in this project: https://github.com/YunoHost-Apps/fallback_ynh"
 
 ynh_send_readme_to_admin --app_message="$message" --recipients="root" --type="restore"
+
+#=================================================
+# END OF SCRIPT
+#=================================================
+
+ynh_script_progression --message="Restoration completed" --last
