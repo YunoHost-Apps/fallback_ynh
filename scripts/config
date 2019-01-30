@@ -89,6 +89,11 @@ if [ -z "$auto_deploy" ]; then
 	auto_deploy=false
 fi
 
+# Type of admin mail configuration
+old_admin_mail_html="$(ynh_app_setting_get $app admin_mail_html)"
+old_admin_mail_html=$(bool_to_true_false $old_admin_mail_html)
+admin_mail_html="${YNH_CONFIG_MAIN_GLOBAL_CONFIG_EMAIL_TYPE:-$old_admin_mail_html}"
+
 #=================================================
 # SHOW_CONFIG FUNCTION FOR 'SHOW' COMMAND
 #=================================================
@@ -108,6 +113,8 @@ show_config() {
 	echo "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_DELAY_BEFORE_INCIDENT=$delay_before_incident"
 	echo "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_CONTACT_MAIL=$contact_mail"
 	echo "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_AUTO_DEPLOY=$auto_deploy"
+
+	echo "YNH_CONFIG_MAIN_GLOBAL_CONFIG_EMAIL_TYPE=$admin_mail_html"
 }
 
 #=================================================
@@ -189,6 +196,10 @@ apply_config() {
 		ynh_replace_string "^auto_deploy=.*" "auto_deploy=$auto_deploy" "$config_file_fallback"
 		ynh_app_setting_set $app auto_deploy "$auto_deploy"
 	fi
+
+	# Set admin_mail_html
+	admin_mail_html=$(bool_to_01 $admin_mail_html)
+	ynh_app_setting_set $app admin_mail_html "$admin_mail_html"
 }
 
 #=================================================
