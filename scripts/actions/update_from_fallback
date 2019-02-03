@@ -12,6 +12,7 @@ source /usr/share/yunohost/helpers
 #=================================================
 # RETRIEVE ARGUMENTS
 #=================================================
+ynh_script_progression --message="Retrieve arguments from the manifest"
 
 app=${YNH_APP_INSTANCE_NAME:-$YNH_APP_ID}
 
@@ -28,7 +29,14 @@ final_path=$(ynh_app_setting_get $app final_path)
 #=================================================
 # SPECIFIC ACTION
 #=================================================
-# FORCE A NEW BACKUP
+# UPDATE THE SERVER FROM FALLBACK
 #=================================================
+ynh_script_progression --message="Update the server from fallback" --weight=9
 
 ynh_exec_warn nice -n10 $final_path/update_from_fallback_process/update_from_fallback.sh
+
+#=================================================
+# END OF SCRIPT
+#=================================================
+
+ynh_script_progression --message="Execution completed" --last

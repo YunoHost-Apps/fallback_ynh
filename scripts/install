@@ -21,6 +21,7 @@ ynh_abort_if_errors
 #=================================================
 # RETRIEVE ARGUMENTS FROM THE MANIFEST
 #=================================================
+ynh_script_progression --message="Retrieve arguments from the manifest"
 
 install_type=$YNH_APP_ARG_INSTALL_TYPE
 encrypt=$YNH_APP_ARG_ENCRYPT
@@ -39,6 +40,7 @@ app=$YNH_APP_INSTANCE_NAME
 #=================================================
 # CHECK IF THE APP CAN BE INSTALLED WITH THESE ARGS
 #=================================================
+ynh_script_progression --message="Check if the app can be installed"
 
 if [ "$install_type" == "main server" ]; then
 	install_type=main
@@ -67,6 +69,7 @@ test ! -e "$final_path" || ynh_die "This path already contains a folder"
 #=================================================
 # STORE SETTINGS FROM MANIFEST
 #=================================================
+ynh_script_progression --message="Store settings from manifest" --weight=2
 
 ynh_app_setting_set $app install_type $install_type
 ynh_app_setting_set $app encrypt $encrypt
@@ -81,18 +84,21 @@ else
 	ynh_app_setting_set $app contact_mail "$contact_mail"
 	ynh_app_setting_set $app auto_deploy "$auto_deploy"
 fi
+ynh_app_setting_set $app admin_mail_html "1"
 
 #=================================================
 # STANDARD MODIFICATIONS
 #=================================================
 # INSTALL DEPENDENCIES
 #=================================================
+ynh_script_progression --message="Install dependencies" --weight=14
 
 ynh_install_app_dependencies $app_depencencies
 
 #=================================================
 # DOWNLOAD, CHECK AND UNPACK SOURCE
 #=================================================
+ynh_script_progression --message="Download, check and unpack source" --weight=4
 
 ynh_app_setting_set $app final_path $final_path
 # Download, check integrity, uncompress and patch the source from app.src
@@ -113,6 +119,7 @@ then
 	#=================================================
 	# MODIFY THE CONFIG
 	#=================================================
+	ynh_script_progression --message="Configure Fallback"
 
 	configfile="$final_path/send_process/config.conf"
 	cp "${configfile}.modele" "$configfile"
@@ -127,6 +134,7 @@ then
 	#=================================================
 	# CREATE A SSH KEY
 	#=================================================
+	ynh_script_progression --message="Create a ssh key" --weight=3
 
 	ssh_key="$final_path/send_process/ssh_key"
 	ssh-keygen -t rsa -b 4096 -N "" -f "$ssh_key" > /dev/null
@@ -141,6 +149,7 @@ then
 	#=================================================
 	# FILL THE APPS LIST
 	#=================================================
+	ynh_script_progression --message="Fill the apps list"
 
 	echo "#000# For each app you want to backup, precede by [.]" > "$final_path/send_process/app_list"
 	yunohost app list -i | grep id: | sed 's/.*id:/[]:/' >> "$final_path/send_process/app_list"
@@ -181,6 +190,7 @@ else
 	#=================================================
 	# CREATE DEDICATED USER
 	#=================================================
+	ynh_script_progression --message="Create a dedicated user" --weight=2
 
 	if ! ynh_system_user_exists "$app"
 	then
@@ -208,6 +218,7 @@ else
 	#=================================================
 	# SET A CHROOT FOR THE SSH USER
 	#=================================================
+	ynh_script_progression --message="Set a chroot for the ssh user" --weight=2
 
 	chroot_dir="/home/$app"
 
@@ -264,6 +275,7 @@ else
 	#=================================================
 	# CONFIGURE AUTO DEPLOYMENT
 	#=================================================
+	ynh_script_progression --message="Configure auto deployment"
 
 	auto_check_config_file="$final_path/deploy_process/auto_check.conf"
 	cp "${auto_check_config_file}.modele" "$auto_check_config_file"
@@ -343,6 +355,7 @@ then
 	#=================================================
 	# SETUP LOGROTATE
 	#=================================================
+	ynh_script_progression --message="Configure logrotate"
 
 	mkdir -p /var/log/$app
 	ln -s /var/log/$app/$app.log "$final_path/send_process/send_backup.log"
@@ -411,14 +424,20 @@ To modify the configuration related to this option, please have a look at $auto_
 	fi
 fi
 
-message="$Informations
+echo "$Informations
 
-For more information about how to use this app, please read the readme https://github.com/YunoHost-Apps/fallback_ynh/blob/master/README.md#how-it-works.
+For more information about how to use this app, please read the __URL_TAG1__readme__URL_TAG2__https://github.com/YunoHost-Apps/fallback_ynh/blob/master/README.md#how-it-works__URL_TAG3__.
 
-You can configure this app easily by using the experimental config-panel feature: $admin_panel/config-panel.
-You can also find some specific actions for this app by using the experimental action feature: $admin_panel/actions.
+You can configure this app easily by using the experimental __URL_TAG1__config-panel feature__URL_TAG2__$admin_panel/config-panel__URL_TAG3__.
+You can also find some specific actions for this app by using the experimental __URL_TAG1__action feature__URL_TAG2__$admin_panel/actions__URL_TAG3__.
 
-If you're facing an issue or want to improve this app, please open a new issue in this project: https://github.com/YunoHost-Apps/fallback_ynh"
+If you're facing an issue or want to improve this app, please open a new issue in this __URL_TAG1__project__URL_TAG2__https://github.com/YunoHost-Apps/fallback_ynh__URL_TAG3__." > mail_to_send
 
-ynh_send_readme_to_admin --app_message="$message" --recipients="root" --type="install"
+ynh_send_readme_to_admin --app_message="mail_to_send" --recipients="root" --type="install"
 ynh_print_ON
+
+#=================================================
+# END OF SCRIPT
+#=================================================
+
+ynh_script_progression --message="Installation completed" --last
