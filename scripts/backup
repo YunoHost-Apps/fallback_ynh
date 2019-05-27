@@ -19,22 +19,22 @@ ynh_abort_if_errors
 #=================================================
 # LOAD SETTINGS
 #=================================================
-ynh_script_progression --message="Load settings" --weight=3
+ynh_script_progression --message="Loading installation settings..." --weight=3
 
 app=$YNH_APP_INSTANCE_NAME
 
-install_type=$(ynh_app_setting_get $app install_type)
-final_path=$(ynh_app_setting_get $app final_path)
-auto_detect_failure=$(ynh_app_setting_get $app auto_detect_failure)
+install_type=$(ynh_app_setting_get --app=$app --key=install_type)
+final_path=$(ynh_app_setting_get --app=$app --key=final_path)
+auto_detect_failure=$(ynh_app_setting_get --app=$app --key=auto_detect_failure)
 
 #=================================================
 # STANDARD BACKUP STEPS
 #=================================================
 # BACKUP THE APP MAIN DIR
 #=================================================
-ynh_script_progression --message="Backup the app main dir"
+ynh_script_progression --message="Backing up the main app directory..."
 
-ynh_backup "$final_path"
+ynh_backup --src_path="$final_path"
 
 #=================================================
 # SPECIFIC BACKUP
@@ -46,26 +46,26 @@ then
 	#=================================================
 	# BACKUP LOGROTATE
 	#=================================================
-	ynh_script_progression --message="Backup logrotate configuration"
+	ynh_script_progression --message="Backing up logrotate configuration..."
 
-	ynh_backup "/etc/logrotate.d/$app"
+	ynh_backup --src_path="/etc/logrotate.d/$app"
 
 	#=================================================
 	# BACKUP THE CRON FILE
 	#=================================================
-	ynh_script_progression --message="Backup cron file"
+	ynh_script_progression --message="Backing up cron file..."
 
-	ynh_backup "/etc/cron.d/$app"
+	ynh_backup --src_path="/etc/cron.d/$app"
 else
 	#=================================================
 	# BACKUP USER DIRECTORIES
 	#=================================================
-	ynh_script_progression --message="Backup user directories"
+	ynh_script_progression --message="Backing up user directories..."
 
-	ynh_backup "/home/$app/bin"
-	ynh_backup "/home/$app/lib"
-	ynh_backup "/home/$app/lib64"
-	ynh_backup "/home/$app/.ssh"
+	ynh_backup --src_path="/home/$app/bin"
+	ynh_backup --src_path="/home/$app/lib"
+	ynh_backup --src_path="/home/$app/lib64"
+	ynh_backup --src_path="/home/$app/.ssh"
 
 	#=================================================
 	# BACKUP THE CRON FILE
@@ -73,8 +73,8 @@ else
 
 	if [ $auto_detect_failure -eq 1 ]
 	then
-		ynh_script_progression --message="Backup cron file"
-		ynh_backup "/etc/cron.d/auto_deploy_fallback"
+		ynh_script_progression --message="Backing up cron file..."
+		ynh_backup --src_path="/etc/cron.d/auto_deploy_fallback"
 	fi
 fi
 
@@ -82,4 +82,4 @@ fi
 # END OF SCRIPT
 #=================================================
 
-ynh_script_progression --message="Backup completed" --last
+ynh_script_progression --message="Backup script completed for $app. (YunoHost will then actually copy those files to the archive)." --last

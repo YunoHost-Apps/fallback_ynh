@@ -15,8 +15,8 @@ source /usr/share/yunohost/helpers
 
 app=${YNH_APP_INSTANCE_NAME:-$YNH_APP_ID}
 
-final_path=$(ynh_app_setting_get $app final_path)
-install_type=$(ynh_app_setting_get $app install_type)
+final_path=$(ynh_app_setting_get --app=$app --key=final_path)
+install_type=$(ynh_app_setting_get --app=$app --key=install_type)
 
 #=================================================
 # SPECIFIC CODE
@@ -66,10 +66,10 @@ old_ssh_port="$(get_config_value ssh_port config_file_main)"
 ssh_port="${YNH_CONFIG_MAIN_SERVER_SSH_CONFIG_SSH_PORT:-$old_ssh_port}"
 
 # pub_key
-old_pub_key="$(ynh_app_setting_get $app pub_key)"
+old_pub_key="$(ynh_app_setting_get --app=$app --key=pub_key)"
 pub_key="${YNH_CONFIG_FALLBACK_SERVER_SSH_CONFIG_PUB_KEY:-$old_pub_key}"
 # auto_detect_failure
-old_auto_detect_failure=$(ynh_app_setting_get $app auto_detect_failure)
+old_auto_detect_failure=$(ynh_app_setting_get --app=$app --key=auto_detect_failure)
 auto_detect_failure="${YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_AUTO_DETECT_FAILURE:-$old_auto_detect_failure}"
 auto_detect_failure=$(bool_to_true_false $auto_detect_failure)
 if [ -z "$auto_detect_failure" ]; then
@@ -90,7 +90,7 @@ if [ -z "$auto_deploy" ]; then
 fi
 
 # Type of admin mail configuration
-old_admin_mail_html="$(ynh_app_setting_get $app admin_mail_html)"
+old_admin_mail_html="$(ynh_app_setting_get --app=$app --key=admin_mail_html)"
 old_admin_mail_html=$(bool_to_true_false $old_admin_mail_html)
 admin_mail_html="${YNH_CONFIG_MAIN_GLOBAL_CONFIG_EMAIL_TYPE:-$old_admin_mail_html}"
 
@@ -128,24 +128,24 @@ apply_config() {
 		if [ "$encrypt" = "true" ]
 		then
 			ynh_print_OFF
-			test -n "$encrypt_password" || ynh_die "The password for encryption can't be empty if you choose to enable encryption."
+			test -n "$encrypt_password" || ynh_die --message="The password for encryption can't be empty if you choose to enable encryption."
 			ynh_print_ON
 			# Replace the password by the previous one
 			passkey="$final_path/send_process/passkey"
 			ynh_print_OFF; echo "$encrypt_password" > "$passkey"; ynh_print_ON
 			chmod 400 "$passkey"
-			ynh_replace_string "^pass_file=.*" "pass_file=$passkey" "$config_file_main"
+			ynh_replace_string --match_string="^pass_file=.*" --replace_string="pass_file=$passkey" --target_file="$config_file_main"
 		fi
 
 		encrypt=$(bool_to_01 $encrypt)
 
 		# Change encrypt in the config file
-		ynh_replace_string "^encrypt=.*" "encrypt=$encrypt" "$config_file_main"
+		ynh_replace_string --match_string="^encrypt=.*" --replace_string="encrypt=$encrypt" --target_file="$config_file_main"
 
 		# Change ssh_host in the config file
-		ynh_replace_string "^ssh_host=.*" "ssh_host=$ssh_host" "$config_file_main"
+		ynh_replace_string --match_string="^ssh_host=.*" --replace_string="ssh_host=$ssh_host" --target_file="$config_file_main"
 		# Change ssh_port in the config file
-		ynh_replace_string "^ssh_port=.*" "ssh_port=$ssh_port" "$config_file_main"
+		ynh_replace_string --match_string="^ssh_port=.*" --replace_string="ssh_port=$ssh_port" --target_file="$config_file_main"
 
 	else
 		# Add the public ssh key to authorized_keys
@@ -159,17 +159,17 @@ apply_config() {
 		if [ "$auto_detect_failure" = "true" ] && [ "$old_auto_detect_failure" = "0" ]
 		then
 			# Put in place the cron file
-			ynh_replace_string "__FINAL_PATH__" "$final_path" "$final_path/deploy_process/auto_deploy_fallback.cron"
+			ynh_replace_string --match_string="__FINAL_PATH__" --replace_string="$final_path" --target_file="$final_path/deploy_process/auto_deploy_fallback.cron"
 			cp $final_path/deploy_process/auto_deploy_fallback.cron /etc/cron.d/auto_deploy_fallback
-			ynh_app_setting_set $app auto_detect_failure 1
+			ynh_app_setting_set --app=$app --key=auto_detect_failure --value=1
 		elif [ "$auto_detect_failure" = "false" ] && [ "$old_auto_detect_failure" = "1" ]
 		then
 			rm "/etc/cron.d/auto_deploy_fallback"
-			ynh_app_setting_set $app auto_detect_failure 0
+			ynh_app_setting_set --app=$app --key=auto_detect_failure --value=0
 		fi
 		# Change delay_before_incident in the config file
-		ynh_replace_string "^delay_before_incident=.*" "delay_before_incident=$delay_before_incident" "$config_file_fallback"
-		ynh_app_setting_set $app delay_before_incident "$delay_before_incident"
+		ynh_replace_string --match_string="^delay_before_incident=.*" --replace_string="delay_before_incident=$delay_before_incident" --target_file="$config_file_fallback"
+		ynh_app_setting_set --app=$app --key=delay_before_incident --value="$delay_before_incident"
 
 		if [ $delay_before_incident -le 5 ]
 		then
@@ -186,20 +186,20 @@ apply_config() {
 		# Reconfigure the cron file
 		if [ -e "/etc/cron.d/auto_deploy_fallback" ]
 		then
-			ynh_replace_string "^.* root" "$cron_delay * * * root" "/etc/cron.d/auto_deploy_fallback"
+			ynh_replace_string --match_string="^.* root" --replace_string="$cron_delay * * * root" --target_file="/etc/cron.d/auto_deploy_fallback"
 		fi
 		# Change contact_mail in the config file
-		ynh_replace_string "^contact_mail=.*" "contact_mail=$contact_mail" "$config_file_fallback"
-		ynh_app_setting_set $app contact_mail "$contact_mail"
+		ynh_replace_string --match_string="^contact_mail=.*" --replace_string="contact_mail=$contact_mail" --target_file="$config_file_fallback"
+		ynh_app_setting_set --app=$app --key=contact_mail --value="$contact_mail"
 		auto_deploy=$(bool_to_01 $auto_deploy)
 		# Change auto_deploy in the config file
-		ynh_replace_string "^auto_deploy=.*" "auto_deploy=$auto_deploy" "$config_file_fallback"
-		ynh_app_setting_set $app auto_deploy "$auto_deploy"
+		ynh_replace_string --match_string="^auto_deploy=.*" --replace_string="auto_deploy=$auto_deploy" --target_file="$config_file_fallback"
+		ynh_app_setting_set --app=$app --key=auto_deploy --value="$auto_deploy"
 	fi
 
 	# Set admin_mail_html
 	admin_mail_html=$(bool_to_01 $admin_mail_html)
-	ynh_app_setting_set $app admin_mail_html "$admin_mail_html"
+	ynh_app_setting_set --app=$app --key=admin_mail_html --value="$admin_mail_html"
 }
 
 #=================================================
