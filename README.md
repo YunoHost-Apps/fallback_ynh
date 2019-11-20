@@ -48,7 +48,7 @@ Not relevant.
 ### How it works
 
 This app is made of 2 parts, you have to install it with the `main server` option on your main server, and again, with the `fallback server` option on the other server you want to use as rescue server.
-> You should keep this other server only for that purpose. And maybe also to make some other backups. And it's obviously better if you can have this other server in another place that the previous one.
+> You should keep this other server only for that purpose. And maybe also to make some other backups. And it's obviously better if you can have this other server in another place than the previous one.
 
 After the installation, every night, the main server will make some backups and send them to your fallback server.  
 At least, it'll make a backup of your system. You can ask to backup your apps too, by editing the file `/home/yunohost.app/fallback/app_list`  
@@ -63,16 +63,19 @@ Let's see how this works.
 So, here we are, you have a failure with your main server. That had to happen !  
 Don't worry, jump on your fallback server and use the deploy script.
 `/home/yunohost.app/fallback/deploy_fallback`
+> You can also use the 'Deploy the fallback server.' action from your admin panel.
 
 This script will backup your fallback server first and then restore the backup from your main server.  
 This restore will change your fallback server and give him the configuration of your main server, and restore the apps you've selected in your app_list.  
 Now this server will became your main server, received your emails and run your apps.
 > In fact, there just a "small thing", you have to change your dns to indicate the new IP of your server. Let's see that at the end of this doc please.
+> In order to ease usage of 'actions', the fallback server should have an associated domain name, like fallback.mydomain.tld
 
 #### So, now my main server is fixed. But I need to get all the stuff happened on the fallback.
 
 If you're done with your fallback server, use the other script, just next to the previous one.
 `/home/yunohost.app/fallback/close_fallback`
+> You can also use the 'Close the fallback server.' action from your admin panel.
 
 This script will backup your fallback system and the apps you've previously restored on it. And put all of that aside.  
 Then, it will remove all of that of your system and restore the backup it made when you used `deploy_fallback`. Like that, nothing happenned on this server.
@@ -80,6 +83,7 @@ Then, it will remove all of that of your system and restore the backup it made w
 So, all your data produced on your fallback are now aside. Waiting for you.  
 Return on your main server, and use this script.  
 `/home/yunohost.app/fallback/update_from_fallback`
+> You can also use the 'Update from your fallback server' action from your admin panel.
 
 To finish, this script will get the backups from the fallback and restore them on your main server. To update your data and keep your main server up to date with what you've done on your fallback.  
 To be more carefull, each restoration will be preceed by a backup. Just in case.
