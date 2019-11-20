@@ -4,6 +4,15 @@ Changelog
 ## Unreleased
 - Nothing for now...
 
+## [0.8~ynh1](https://github.com/YunoHost-Apps/fallback_ynh/pull/20) - 2019-11-20
+
+#### Changed
+- [Normalization from example_ynh](https://github.com/YunoHost-Apps/fallback_ynh/commit/28afc3a7c7b3604e993cb782423275b6929267e9)
+* [Update to v0.8](https://github.com/YunoHost-Apps/fallback_ynh/commit/ba212244ea2c852fc3b3faf939ab35e3523fd28a)
+
+#### Added
+- [Add a changelog](https://github.com/YunoHost-Apps/fallback_ynh/commit/bde776613f72d3f851f6f86e766a5559c28ba684)
+* [Add actions and use toml](https://github.com/YunoHost-Apps/fallback_ynh/commit/88ddc2d61050809b85f2be857dc4f78a39da2388)
 
 ## [0.71~ynh3](https://github.com/YunoHost-Apps/fallback_ynh/pull/14) - 2019-02-03
 
