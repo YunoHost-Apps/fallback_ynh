@@ -28,11 +28,11 @@ final_path=$(ynh_app_setting_get --app=$app --key=final_path)
 #=================================================
 # SPECIFIC ACTION
 #=================================================
-# UPDATE THE SERVER FROM FALLBACK
+# FORCE A NEW BACKUP
 #=================================================
-ynh_script_progression --message="Updating the server from fallback..." --weight=9
+ynh_script_progression --message="Closing the fallback..." --weight=9
 
-ynh_exec_warn nice -n10 $final_path/update_from_fallback_process/update_from_fallback.sh auto
+ynh_exec_warn $final_path/deploy_process/close_fallback.sh auto
 
 #=================================================
 # END OF SCRIPT

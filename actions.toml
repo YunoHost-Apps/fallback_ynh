@@ -1,0 +1,64 @@
+[force_backup]
+name = "[Main server] Create a new backup"
+command = "/bin/bash scripts/actions/force_backup"
+# user = "root"  # optional
+# cwd = "/" # optional
+# accepted_return_codes = [0, 1, 2, 3]  # optional
+accepted_return_codes = [0]
+description = "Run Fallback to create a new backup and send it."
+
+[clean_backups]
+name = "[Main server] Clean all previous backup files"
+command = "/bin/bash scripts/actions/clean_backups"
+# user = "root"  # optional
+# cwd = "/" # optional
+# accepted_return_codes = [0, 1, 2, 3]  # optional
+accepted_return_codes = [0]
+description = "Remove all previous backup files made by Fallback."
+
+[update_from_fallback]
+name = "[Main server] Update from your fallback server"
+command = "/bin/bash scripts/actions/update_from_fallback"
+# user = "root"  # optional
+# cwd = "/" # optional
+# accepted_return_codes = [0, 1, 2, 3]  # optional
+accepted_return_codes = [0]
+description = "Update the main server with the backup from your fallback server."
+
+
+[reset_default_config]
+name = "Reset the config file and restore a default one."
+command = "/bin/bash scripts/actions/reset_default_config \"both\""
+# user = "root"  # optional
+# cwd = "/" # optional
+# accepted_return_codes = [0, 1, 2, 3]  # optional
+accepted_return_codes = [0]
+description = "Reset the config file config.conf or auto_check.conf."
+
+[update_dns]
+name = "Update your DNS to point your domain to this server."
+command = "/bin/bash scripts/actions/update_dns"
+# user = "root"  # optional
+# cwd = "/" # optional
+# accepted_return_codes = [0, 1, 2, 3]  # optional
+accepted_return_codes = [0]
+description = "In order to use that action, your 'auto_check.conf' file has to be set with 'auto_update_DNS=1' and 'auto_update_script' filled with a working script."
+
+
+[deploy_fallback]
+name = "[Fallback server] Deploy the fallback server."
+command = "/bin/bash scripts/actions/deploy_fallback"
+# user = "root"  # optional
+# cwd = "/" # optional
+# accepted_return_codes = [0, 1, 2, 3]  # optional
+accepted_return_codes = [0]
+description = "Deploy the fallback server to replace your broken main server."
+
+[close_fallback]
+name = "[Fallback server] Close the fallback server."
+command = "/bin/bash scripts/actions/close_fallback"
+# user = "root"  # optional
+# cwd = "/" # optional
+# accepted_return_codes = [0, 1, 2, 3]  # optional
+accepted_return_codes = [0]
+description = "Close the fallback server to return it to its fallback state. On the main server, use 'update_from_fallback' to update your data"

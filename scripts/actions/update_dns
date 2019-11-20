@@ -28,11 +28,24 @@ final_path=$(ynh_app_setting_get --app=$app --key=final_path)
 #=================================================
 # SPECIFIC ACTION
 #=================================================
-# UPDATE THE SERVER FROM FALLBACK
+# GET DNS CONFIGURATION
 #=================================================
-ynh_script_progression --message="Updating the server from fallback..." --weight=9
+ynh_script_progression --message="Checking DNS configuration of the fallback..." --weight=1
 
-ynh_exec_warn nice -n10 $final_path/update_from_fallback_process/update_from_fallback.sh auto
+# And the script to use to do it
+auto_update_script=$(grep "^auto_update_script=" "$final_path/deploy_process/auto_check.conf" | cut -d'=' -f2)
+
+If [ "auto_update_script" == "$final_path/DynHost/..." ]
+then
+    ynh_die --message="Your current configuration in \"$final_path/deploy_process/auto_check.conf\" does not specify the script to use to update your DNS. Please configure a script to use and retry."
+fi
+
+#=================================================
+# FORCE A NEW BACKUP
+#=================================================
+ynh_script_progression --message="Updating the DNS..." --weight=9
+
+ynh_exec_warn "$auto_update_script"
 
 #=================================================
 # END OF SCRIPT
