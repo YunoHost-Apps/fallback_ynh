@@ -12,7 +12,7 @@ Si vous n'avez pas YunoHost, merci de regarder [ici](https://yunohost.org/#/inst
 Fallback est une application spéciale, uniquement en ligne de commande, qui vous donne le moyen de disposer d'un second serveur que vous pourrez utiliser si le premier tombe en panne.  
 Cet autre serveur va vous permettre de déployer une copie de votre serveur pour retrouver vos services internet durant la panne.
 
-**Version embarquée:** 0.71
+**Version embarquée:** 0.8
 
 ## Captures d'écran
 
@@ -37,9 +37,9 @@ Non applicable.
 
 #### Architectures supportées.
 
-* x86-64b - [![](https://ci-apps.yunohost.org/ci/logs/fallback%20%28Community%29.svg)](https://ci-apps.yunohost.org/ci/apps/fallback/)
-* ARMv8-A - [![](https://ci-apps-arm.yunohost.org/ci/logs/fallback%20%28Community%29.svg)](https://ci-apps-arm.yunohost.org/ci/apps/fallback/)
-* Jessie x86-64b - [![](https://ci-stretch.nohost.me/ci/logs/fallback%20%28Community%29.svg)](https://ci-stretch.nohost.me/ci/apps/fallback/)
+* x86-64b - [![](https://ci-apps.yunohost.org/ci/logs/fallback%20%28Apps%29.svg)](https://ci-apps.yunohost.org/ci/apps/fallback/)
+* ARMv8-A - [![](https://ci-apps-arm.yunohost.org/ci/logs/fallback%20%28Apps%29.svg)](https://ci-apps-arm.yunohost.org/ci/apps/fallback/)
+* Jessie x86-64b - [![](https://ci-stretch.nohost.me/ci/logs/fallback%20%28Apps%29.svg)](https://ci-stretch.nohost.me/ci/apps/fallback/)
 
 ## Limitations
 
@@ -48,7 +48,8 @@ Non applicable.
 ### Comment ça fonctionne
 
 Cette app est consitutée de 2 parties, vous devez l'installer avec l'option `main server` sur votre serveur principal, et une seconde fois, avec l'option `fallback server` sur l'autre serveur, qui vous voulez utiliser comme serveur de secours.
-> Vous devriez garder cet autre serveur uniquement pour cet usage. Ou alors pour y mettre quelques autres backups Et bien sûr, il est préférable que ce serveur soit à un autre endroit.
+> Vous devriez garder cet autre serveur uniquement pour cet usage. Ou alors pour y mettre quelques autres backups. Et bien sûr, il est préférable que ce serveur soit à un autre endroit.
+> Afin de simplifier l'usage des 'actions', le serveur de secours devrait bénéficier d'un nom de domaine associé, comme fallback.mondomain.tld
 
 Après l'installation, chaque nuit, le serveur principal va faire des sauvegardes et les envoyer sur votre serveur de secours.  
 Au minimum, il fera une sauvegarde du système. Vous pouvez demander la sauvegarde de vos applications aussi, en éditant le fichier `/home/yunohost.app/fallback/app_list`  
@@ -63,6 +64,7 @@ Voyons comment ça marche.
 Voilà, nous y sommes, votre serveur principal est panne, fallait bien que ça arrive !  
 Pas d'inquiétude, sautez sur votre serveur de secours et utiliser le script de déploiement.
 `/home/yunohost.app/fallback/deploy_fallback`
+> Vous pouvez également utiliser l'action 'Deploy the fallback server.' depuis votre panel administrateur.
 
 Ce script va commencer par faire un backup de votre serveur de secours, puis restaurer le backup de votre serveur principal.  
 Cette restauration va transformer votre serveur de secours en lui donnant la configuration de votre serveur principal. Ensuite, il va restaurer les applications sélectionnées dans votre fichier app_list.  
@@ -73,6 +75,7 @@ A présent, ce serveur va devenir votre serveur principal, recevoir vos mails et
 
 Si vous avez terminé avec votre serveur de secours, utiliser l'autre script, juste à côté du précédent.
 `/home/yunohost.app/fallback/close_fallback`
+> Vous pouvez également utiliser l'action 'Close the fallback server.' depuis votre panel administrateur.
 
 Ce script va faire un backup du système de votre serveur de secours et des apps précédemment restaurées. Et mettre ces backups de côtés.  
 
@@ -81,6 +84,7 @@ Ensuite, il va nettoyer le système et restaurer le backup créé lors de l'exé
 Donc, toutes vos données produites sur votre serveur de secours sont maintenant mise de côté. Vous attendant gentillement.  
 Retourner donc sur votre serveur principal et utiliser ce script.  
 `/home/yunohost.app/fallback/update_from_fallback`
+> Vous pouvez également utiliser l'action 'Update from your fallback server' depuis votre panel administrateur.
 
 Pour terminer, ce script va télécharger les backups depuis votre serveur de secours et les restaurer sur votre serveur principal. Pour mettre à jour vos données et garder votre serveur principal à jour avec ce que vous avez fait sur le serveur de secours.  
 Pour être plus prudent, chaque restauration sera précédée d'un backup, juste au cas où.

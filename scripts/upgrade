@@ -14,22 +14,22 @@ source _variables
 #=================================================
 # LOAD SETTINGS
 #=================================================
-ynh_script_progression --message="Load settings" --weight=4
+ynh_script_progression --message="Loading installation settings..." --weight=4
 
 app=$YNH_APP_INSTANCE_NAME
 
-install_type=$(ynh_app_setting_get $app install_type)
-encrypt=$(ynh_app_setting_get $app encrypt)
-final_path=$(ynh_app_setting_get $app final_path)
-ssh_host=$(ynh_app_setting_get $app ssh_host)
-ssh_port=$(ynh_app_setting_get $app ssh_port)
-pub_key="$(ynh_app_setting_get $app pub_key)"
-auto_detect_failure=$(ynh_app_setting_get $app auto_detect_failure)
+install_type=$(ynh_app_setting_get --app=$app --key=install_type)
+encrypt=$(ynh_app_setting_get --app=$app --key=encrypt)
+final_path=$(ynh_app_setting_get --app=$app --key=final_path)
+ssh_host=$(ynh_app_setting_get --app=$app --key=ssh_host)
+ssh_port=$(ynh_app_setting_get --app=$app --key=ssh_port)
+pub_key="$(ynh_app_setting_get --app=$app --key=pub_key)"
+auto_detect_failure=$(ynh_app_setting_get --app=$app --key=auto_detect_failure)
 
 # Optional parameters from config-panel feature
-contact_mail=$(ynh_app_setting_get $app contact_mail)
-auto_deploy=$(ynh_app_setting_get $app auto_deploy)
-delay_before_incident=$(ynh_app_setting_get $app delay_before_incident)
+contact_mail=$(ynh_app_setting_get --app=$app --key=contact_mail)
+auto_deploy=$(ynh_app_setting_get --app=$app --key=auto_deploy)
+delay_before_incident=$(ynh_app_setting_get --app=$app --key=delay_before_incident)
 
 #=================================================
 # CHECK VERSION
@@ -40,36 +40,36 @@ upgrade_type=$(ynh_check_app_version_changed)
 #=================================================
 # ENSURE DOWNWARD COMPATIBILITY
 #=================================================
-ynh_script_progression --message="Ensure downward compatibility"
+ynh_script_progression --message="Ensuring downward compatibility..."
 
 if [ "$install_type" == "fallback" ]
 then
 	# If auto_detect_failure setting doesn't exist
 	if [ -z "$auto_detect_failure" ]; then
 		auto_detect_failure=0
-		ynh_app_setting_set $app auto_detect_failure $auto_detect_failure
+		ynh_app_setting_set --app=$app --key=auto_detect_failure --value=$auto_detect_failure
 	fi
 	# If delay_before_incident setting doesn't exist
 	if [ -z "$delay_before_incident" ]; then
 		delay_before_incident=$(grep "^delay_before_incident=" "$final_path/deploy_process/auto_check.conf" | cut -d= -f2)
-		ynh_app_setting_set $app delay_before_incident $delay_before_incident
+		ynh_app_setting_set --app=$app --key=delay_before_incident --value=$delay_before_incident
 	fi
 	# If contact_mail setting doesn't exist
 	if [ -z "$contact_mail" ]; then
 		contact_mail=$(grep "^contact_mail=" "$final_path/deploy_process/auto_check.conf" | cut -d= -f2)
-		ynh_app_setting_set $app contact_mail $contact_mail
+		ynh_app_setting_set --app=$app --key=contact_mail --value=$contact_mail
 	fi
 	# If auto_deploy setting doesn't exist
 	if [ -z "$auto_deploy" ]; then
 		auto_deploy=$(grep "^auto_deploy=" "$final_path/deploy_process/auto_check.conf" | cut -d= -f2)
-		ynh_app_setting_set $app auto_deploy $auto_deploy
+		ynh_app_setting_set --app=$app --key=auto_deploy --value=$auto_deploy
 	fi
 fi
 
 #=================================================
 # BACKUP BEFORE UPGRADE THEN ACTIVE TRAP
 #=================================================
-ynh_script_progression --message="Backup the app before upgrading" --weight=5
+ynh_script_progression --message="Backing up the app before upgrading (may take a while)..." --weight=5
 
 # Backup the current version of the app
 ynh_backup_before_upgrade
@@ -88,15 +88,15 @@ ynh_abort_if_errors
 
 if [ "$upgrade_type" == "UPGRADE_APP" ]
 then
-	ynh_script_progression --message="Download, check and unpack source" --weight=2
+    ynh_script_progression --message="Upgrading source files..." --weight=2
 	# Download, check integrity, uncompress and patch the source from app.src
-	ynh_setup_source "$final_path"
+	ynh_setup_source --dest_dir="$final_path"
 fi
 
 #=================================================
 # UPGRADE DEPENDENCIES
 #=================================================
-ynh_script_progression --message="Upgrade dependencies" --weight=9
+ynh_script_progression --message="Upgrading dependencies..." --weight=9
 
 ynh_install_app_dependencies $app_depencencies
 
@@ -114,22 +114,22 @@ then
 
 	if [ "$upgrade_type" == "UPGRADE_APP" ]
 	then
-		ynh_script_progression --message="Reconfigure Fallback"
+		ynh_script_progression --message="Reconfiguring Fallback..."
 		configfile="$final_path/send_process/config.conf"
-		ynh_replace_string "ssh_user=.*" "ssh_user=$app" "$configfile"
-		ynh_replace_string "ssh_host=.*" "ssh_host=$ssh_host" "$configfile"
-		ynh_replace_string "ssh_port=.*" "ssh_port=$ssh_port" "$configfile"
-		ynh_replace_string "ssh_key=.*" "ssh_key=$final_path/send_process/ssh_key" "$configfile"
+		ynh_replace_string --match_string="ssh_user=.*" --replace_string="ssh_user=$app" --target_file="$configfile"
+		ynh_replace_string --match_string="ssh_host=.*" --replace_string="ssh_host=$ssh_host" --target_file="$configfile"
+		ynh_replace_string --match_string="ssh_port=.*" --replace_string="ssh_port=$ssh_port" --target_file="$configfile"
+		ynh_replace_string --match_string="ssh_key=.*" --replace_string="ssh_key=$final_path/send_process/ssh_key" --target_file="$configfile"
 
 		data_dir="/home/yunohost.app/$app/fallback_backup"
-		ynh_replace_string "main_storage_dir=.*" "main_storage_dir=$data_dir" "$configfile"
-		ynh_replace_string "encrypt=.*" "encrypt=$encrypt" "$configfile"
+		ynh_replace_string --match_string="main_storage_dir=.*" --replace_string="main_storage_dir=$data_dir" --target_file="$configfile"
+		ynh_replace_string --match_string="encrypt=.*" --replace_string="encrypt=$encrypt" --target_file="$configfile"
 	fi
 
 	#=================================================
 	# UPDATE THE CRON
 	#=================================================
-	ynh_script_progression --message="Update the cron"
+	ynh_script_progression --message="Updating the cron..."
 
 	echo "0 1 * * * root \"$final_path/send_process/send_backup.sh\" > /dev/null" > /etc/cron.d/$app
 
@@ -140,9 +140,9 @@ else
 	# CREATE DEDICATED USER
 	#=================================================
 
-	if ! ynh_system_user_exists "$app"
+	if ! ynh_system_user_exists --username=$app
 	then
-		ynh_script_progression --message="Create a dedicated user"
+		ynh_script_progression --message="Making sure dedicated system user exists..."
 		useradd -d "/home/$app" --system --user-group $app --shell /bin/bash
 	fi
 
@@ -152,14 +152,14 @@ else
 
 	if [ "$upgrade_type" == "UPGRADE_APP" ]
 	then
-		ynh_replace_string "\(local_archive_dir=\"/home/\)USER" "\1$app" "$final_path/deploy_process/deploy_fallback.sh"
-		ynh_replace_string "\(local_archive_dir=\"/home/\)USER" "\1$app" "$final_path/deploy_process/close_fallback.sh"
+		ynh_replace_string --match_string="\(local_archive_dir=\"/home/\)USER" --replace_string="\1$app" --target_file="$final_path/deploy_process/deploy_fallback.sh"
+		ynh_replace_string --match_string="\(local_archive_dir=\"/home/\)USER" --replace_string="\1$app" --target_file="$final_path/deploy_process/close_fallback.sh"
 	fi
 
 	#=================================================
 	# UPDATE THE CHROOT FOR THE SSH USER
 	#=================================================
-	ynh_script_progression --message="Update the chroot for the ssh user"
+	ynh_script_progression --message="Updating the chroot for the ssh user..."
 
 	chroot_dir="/home/$app"
 
@@ -168,7 +168,7 @@ else
 
 	# Copy the ld-linux file, according to the architecture
 	copy_ld-linux () {
-		! test -e "$1" || sudo cp "$1" "$chroot_dir/$2/"
+		! test -e "$1" || cp "$1" "$chroot_dir/$2/"
 	}
 	copy_ld-linux /lib/ld-linux.so.2 lib
 	copy_ld-linux /lib64/ld-linux-x86-64.so.2 lib64
@@ -177,7 +177,7 @@ else
 	# Copy binary and its libraries into the chroot.
 	ssh_chroot_copy_binary () {
 		# Find and copy the binary file
-		sudo cp `which $1` "$chroot_dir/bin/$(basename $1)"
+		cp `which $1` "$chroot_dir/bin/$(basename $1)"
 		# Then search for its libraries
 		while read lib_file
 		do
@@ -186,7 +186,7 @@ else
 			then
 				# Keep only the path of this lib
 				local lib_path=$(echo "$lib_file" | awk '{print $3}')
-				sudo cp $lib_path "$chroot_dir/lib/"
+				cp $lib_path "$chroot_dir/lib/"
 			fi
 		done <<< "$(ldd `which $1`)"
 	}
@@ -222,23 +222,23 @@ else
 
 	if [ "$upgrade_type" == "UPGRADE_APP" ]
 	then
-		ynh_script_progression --message="Configure auto deployment"
+		ynh_script_progression --message="Configuring auto deployment..."
 		auto_check_config_file="$final_path/deploy_process/auto_check.conf"
-		ynh_replace_string "__FINAL_PATH__" "$final_path" "$auto_check_config_file"
+		ynh_replace_string --match_string="__FINAL_PATH__" --replace_string="$final_path" --target_file="$auto_check_config_file"
 
 		# Optional parameters from config-panel feature
 		if [ -n "$contact_mail" ]; then
-			ynh_replace_string "^contact_mail=.*" "contact_mail=$contact_mail" "$auto_check_config_file"
+			ynh_replace_string --match_string="^contact_mail=.*" --replace_string="contact_mail=$contact_mail" --target_file="$auto_check_config_file"
 		fi
 		if [ -n "$auto_deploy" ]; then
-			ynh_replace_string "^auto_deploy=.*" "auto_deploy=$auto_deploy" "$auto_check_config_file"
+			ynh_replace_string --match_string="^auto_deploy=.*" --replace_string="auto_deploy=$auto_deploy" --target_file="$auto_check_config_file"
 		fi
 		if [ -n "$delay_before_incident" ]; then
-			ynh_replace_string "^delay_before_incident=.*" "delay_before_incident=$delay_before_incident" "$auto_check_config_file"
+			ynh_replace_string --match_string="^delay_before_incident=.*" --replace_string="delay_before_incident=$delay_before_incident" --target_file="$auto_check_config_file"
 		fi
 
 		# Configure the cron file
-		ynh_replace_string "__FINAL_PATH__" "$final_path" "$final_path/deploy_process/auto_deploy_fallback.cron"
+		ynh_replace_string --match_string="__FINAL_PATH__" --replace_string="$final_path" --target_file="$final_path/deploy_process/auto_deploy_fallback.cron"
 	fi
 fi
 
@@ -259,8 +259,8 @@ fi
 # CONFIGURE HOOKS
 #=================================================
 
-ynh_replace_string "__FINALPATH__" "$final_path" "../hooks/post_app_install"
-ynh_replace_string "__FINALPATH__" "$final_path" "../hooks/post_app_remove"
+ynh_replace_string --match_string="__FINALPATH__" --replace_string="$final_path" --target_file="../hooks/post_app_install"
+ynh_replace_string --match_string="__FINALPATH__" --replace_string="$final_path" --target_file="../hooks/post_app_remove"
 
 #=================================================
 # GENERIC FINALIZATION
@@ -276,7 +276,7 @@ then
 	#=================================================
 	# SETUP LOGROTATE
 	#=================================================
-	ynh_script_progression --message="Reconfigure logrotate" --weight=2
+	ynh_script_progression --message="Upgrading logrotate configuration..." --weight=2
 
 	# Use logrotate to manage application logfile(s)
 	ynh_use_logrotate --non-append
@@ -341,10 +341,10 @@ If you're facing an issue or want to improve this app, please open a new issue i
 Changelog since your last upgrade:
 $(cat changelog)" > mail_to_send
 
-ynh_send_readme_to_admin --app_message="mail_to_send" --recipients="root" --type="upgrade"
+ynh_send_readme_to_admin --app_message="mail_to_send" --recipients="root" --type=upgrade
 
 #=================================================
 # END OF SCRIPT
 #=================================================
 
-ynh_script_progression --message="Upgrade completed" --last
+ynh_script_progression --message="Upgrade of $app completed" --last

@@ -12,20 +12,20 @@ source /usr/share/yunohost/helpers
 #=================================================
 # LOAD SETTINGS
 #=================================================
-ynh_script_progression --message="Load settings" --weight=2
+ynh_script_progression --message="Loading installation settings..." --weight=2
 
 app=$YNH_APP_INSTANCE_NAME
 
-install_type=$(ynh_app_setting_get $app install_type)
-final_path=$(ynh_app_setting_get $app final_path)
-ssh_host=$(ynh_app_setting_get $app ssh_host)
+install_type=$(ynh_app_setting_get --app=$app --key=install_type)
+final_path=$(ynh_app_setting_get --app=$app --key=final_path)
+ssh_host=$(ynh_app_setting_get --app=$app --key=ssh_host)
 
 #=================================================
 # STANDARD REMOVE
 #=================================================
 # REMOVE DEPENDENCIES
 #=================================================
-ynh_script_progression --message="Remove dependencies" --weight=7
+ynh_script_progression --message="Removing dependencies..." --weight=7
 
 # Remove metapackage and its dependencies
 ynh_remove_app_dependencies
@@ -33,21 +33,21 @@ ynh_remove_app_dependencies
 #=================================================
 # REMOVE APP MAIN DIR
 #=================================================
-ynh_script_progression --message="Remove app main directory"
+ynh_script_progression --message="Removing app main directory..."
 
 # Remove the app directory securely
-ynh_secure_remove "$final_path"
+ynh_secure_remove --file="$final_path"
 
 if [ "$install_type" == "main" ]
 then
 	#=================================================
 	# REMOVE LOGROTATE CONFIGURATION
 	#=================================================
-	ynh_script_progression --message="Remove logrotate configuration"
+	ynh_script_progression --message="Removing logrotate configuration..."
 
 	# Remove the app-specific logrotate config
 	ynh_remove_logrotate
-	ynh_secure_remove "/var/log/$app"
+	ynh_secure_remove --file="/var/log/$app"
 fi
 
 #=================================================
@@ -60,7 +60,7 @@ then
 	# REMOVE THE CRON FILE
 	#=================================================
 
-	ynh_secure_remove "/etc/cron.d/$app"
+	ynh_secure_remove --file="/etc/cron.d/$app"
 
 	#=================================================
 	# REMOVE THE HOST FROM THE KNOWN HOST LIST
@@ -71,15 +71,15 @@ then
 	#=================================================
 	# REMOVE DEDICATED USER
 	#=================================================
-	ynh_script_progression --message="Remove the dedicated user"
+	ynh_script_progression --message="Removing the dedicated system user..."
 
-	ynh_system_user_delete $app
-	ynh_secure_remove "/home/$app"
+	ynh_system_user_delete --username=$app
+	ynh_secure_remove --file="/home/$app"
 
 	#=================================================
 	# REMOVE THE CHROOT FROM THE SSH CONFIG
 	#=================================================
-	ynh_script_progression --message="Remove the chroot from the ssh config"
+	ynh_script_progression --message="Removing the chroot from the ssh config..."
 
 	sed -i "/# Automatically added by $app/d" /etc/ssh/sshd_config
 
@@ -90,18 +90,18 @@ else
 	# REMOVE THE CRON FILE
 	#=================================================
 
-	ynh_secure_remove "/etc/cron.d/auto_deploy_fallback"
+	ynh_secure_remove --file="/etc/cron.d/auto_deploy_fallback"
 fi
 
 #=================================================
 # REMOVE THE DATA DIRECTORY
 #=================================================
-ynh_script_progression --message="Remove the data directory" --weight=2
+ynh_script_progression --message="Removing the data directory..." --weight=2
 
-ynh_secure_remove "/home/yunohost.app/$app"
+ynh_secure_remove --file="/home/yunohost.app/$app"
 
 #=================================================
 # END OF SCRIPT
 #=================================================
 
-ynh_script_progression --message="Deletion completed" --last
+ynh_script_progression --message="Removal of $app completed" --last

@@ -12,16 +12,15 @@ source /usr/share/yunohost/helpers
 #=================================================
 # RETRIEVE ARGUMENTS
 #=================================================
-ynh_script_progression --message="Retrieve arguments from the manifest"
 
 app=${YNH_APP_INSTANCE_NAME:-$YNH_APP_ID}
-final_path=$(ynh_app_setting_get $app final_path)
-ssh_host=$(ynh_app_setting_get $app ssh_host)
-ssh_port=$(ynh_app_setting_get $app ssh_port)
-encrypt=$(ynh_app_setting_get $app encrypt)
-delay_before_incident=$(ynh_app_setting_get $app delay_before_incident)
-contact_mail=$(ynh_app_setting_get $app contact_mail)
-auto_deploy=$(ynh_app_setting_get $app auto_deploy)
+final_path=$(ynh_app_setting_get --app=$app --key=final_path)
+ssh_host=$(ynh_app_setting_get --app=$app --key=ssh_host)
+ssh_port=$(ynh_app_setting_get --app=$app --key=ssh_port)
+encrypt=$(ynh_app_setting_get --app=$app --key=encrypt)
+delay_before_incident=$(ynh_app_setting_get --app=$app --key=delay_before_incident)
+contact_mail=$(ynh_app_setting_get --app=$app --key=contact_mail)
+auto_deploy=$(ynh_app_setting_get --app=$app --key=auto_deploy)
 
 #=================================================
 # SORT OUT THE CONFIG FILE TO HANDLE
@@ -42,10 +41,10 @@ fi
 #=================================================
 # RESET THE CONFIG FILE
 #=================================================
-ynh_script_progression --message="Reset the config file"
+ynh_script_progression --message="Reseting the config file..."
 
 # Verify the checksum and backup the file if it's different
-ynh_backup_if_checksum_is_different "$config_file"
+ynh_backup_if_checksum_is_different --file="$config_file"
 
 if [ "$file" = "both" ]
 then
@@ -55,33 +54,33 @@ then
 		cp "${config_file}.modele" "$config_file"
 
 		# Recreate the default config
-		ynh_replace_string "ssh_user=.*" "ssh_user=$app" "$config_file"
-		ynh_replace_string "ssh_host=.*" "ssh_host=$ssh_host" "$config_file"
-		ynh_replace_string "ssh_port=.*" "ssh_port=$ssh_port" "$config_file"
+		ynh_replace_string --match_string="ssh_user=.*" --replace_string="ssh_user=$app" --target_file="$config_file"
+		ynh_replace_string --match_string="ssh_host=.*" --replace_string="ssh_host=$ssh_host" --target_file="$config_file"
+		ynh_replace_string --match_string="ssh_port=.*" --replace_string="ssh_port=$ssh_port" --target_file="$config_file"
 
 		data_dir="/home/yunohost.app/$app/fallback_backup"
-		ynh_replace_string "main_storage_dir=.*" "main_storage_dir=$data_dir" "$config_file"
-		ynh_replace_string "encrypt=.*" "encrypt=$encrypt" "$config_file"
+		ynh_replace_string --match_string="main_storage_dir=.*" --replace_string="main_storage_dir=$data_dir" --target_file="$config_file"
+		ynh_replace_string --match_string="encrypt=.*" --replace_string="encrypt=$encrypt" --target_file="$config_file"
 
 		ssh_key="$final_path/send_process/ssh_key"
-		ynh_replace_string "ssh_key=.*" "ssh_key=$ssh_key" "$config_file"
+		ynh_replace_string --match_string="ssh_key=.*" --replace_string="ssh_key=$ssh_key" --target_file="$config_file"
 
 		passkey="$final_path/send_process/passkey"
-		ynh_replace_string "pass_file=.*" "pass_file=$passkey" "$config_file"
+		ynh_replace_string --match_string="pass_file=.*" --replace_string="pass_file=$passkey" --target_file="$config_file"
 	else
 		# Get the default file and overwrite the current config
 		cp "${config_file}.modele" "$config_file"
 
 		# Recreate the default config
-		ynh_replace_string "delay_before_incident=.*" "delay_before_incident=$delay_before_incident" "$config_file"
-		ynh_replace_string "contact_mail=.*" "contact_mail=$contact_mail" "$config_file"
-		ynh_replace_string "auto_deploy=.*" "auto_deploy=$auto_deploy" "$config_file"
-		ynh_replace_string "__FINAL_PATH__" "$final_path" "$config_file"
+		ynh_replace_string --match_string="delay_before_incident=.*" --replace_string="delay_before_incident=$delay_before_incident" --target_file="$config_file"
+		ynh_replace_string --match_string="contact_mail=.*" --replace_string="contact_mail=$contact_mail" --target_file="$config_file"
+		ynh_replace_string --match_string="auto_deploy=.*" --replace_string="auto_deploy=$auto_deploy" --target_file="$config_file"
+		ynh_replace_string --match_string="__FINAL_PATH__" --replace_string="$final_path" --target_file="$config_file"
 	fi
 fi
 
 # Calculate and store the config file checksum into the app settings
-ynh_store_file_checksum "$config_file"
+ynh_store_file_checksum --file="$config_file"
 
 #=================================================
 # END OF SCRIPT

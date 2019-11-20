@@ -21,7 +21,6 @@ ynh_abort_if_errors
 #=================================================
 # RETRIEVE ARGUMENTS FROM THE MANIFEST
 #=================================================
-ynh_script_progression --message="Retrieve arguments from the manifest"
 
 install_type=$YNH_APP_ARG_INSTALL_TYPE
 encrypt=$YNH_APP_ARG_ENCRYPT
@@ -40,69 +39,69 @@ app=$YNH_APP_INSTANCE_NAME
 #=================================================
 # CHECK IF THE APP CAN BE INSTALLED WITH THESE ARGS
 #=================================================
-ynh_script_progression --message="Check if the app can be installed"
+ynh_script_progression --message="Validating installation parameters..."
 
 if [ "$install_type" == "main server" ]; then
 	install_type=main
 elif  [ "$install_type" == "fallback server" ]; then
 	install_type=fallback
 else
-	ynh_die "Install type not recognized"
+	ynh_die --message="Install type not recognized"
 fi
 
 if [ "$install_type" == "main" ]
 then
 	ynh_print_OFF
 	if [ $encrypt -eq 1 ]; then
-		test -n "$encryption_pwd" || ynh_die "encryption_pwd can't be empty if you choose a 'main server' installation with encryption."
+		test -n "$encryption_pwd" || ynh_die --message="encryption_pwd can't be empty if you choose a 'main server' installation with encryption."
 	fi
 	ynh_print_ON
-	test -n "$ssh_host" || ynh_die "ssh_host can't be empty if you choose a 'main server' installation."
-	test -n "$ssh_port" ||  ynh_die "ssh_port can't be empty if you choose a 'main server' installation."
+	test -n "$ssh_host" || ynh_die --message="ssh_host can't be empty if you choose a 'main server' installation."
+	test -n "$ssh_port" ||  ynh_die --message="ssh_port can't be empty if you choose a 'main server' installation."
 else
-	test -n "$pub_key" ||  ynh_die "pub_key can't be empty if you choose a 'fallback server' installation"
+	test -n "$pub_key" ||  ynh_die --message="pub_key can't be empty if you choose a 'fallback server' installation"
 fi
 
 final_path=/opt/yunohost/$app
-test ! -e "$final_path" || ynh_die "This path already contains a folder"
+test ! -e "$final_path" || ynh_die --message="This path already contains a folder"
 
 #=================================================
 # STORE SETTINGS FROM MANIFEST
 #=================================================
-ynh_script_progression --message="Store settings from manifest" --weight=2
+ynh_script_progression --message="Storing installation settings..." --weight=2
 
-ynh_app_setting_set $app install_type $install_type
-ynh_app_setting_set $app encrypt $encrypt
+ynh_app_setting_set --app=$app --key=install_type --value=$install_type
+ynh_app_setting_set --app=$app --key=encrypt --value=$encrypt
 if [ "$install_type" == "main" ]
 then
-	ynh_app_setting_set $app ssh_host $ssh_host
-	ynh_app_setting_set $app ssh_port $ssh_port
+	ynh_app_setting_set --app=$app --key=ssh_host --value=$ssh_host
+	ynh_app_setting_set --app=$app --key=ssh_port --value=$ssh_port
 else
-	ynh_app_setting_set $app pub_key "$pub_key"
-	ynh_app_setting_set $app auto_detect_failure "$auto_detect_failure"
-	ynh_app_setting_set $app delay_before_incident "$delay_before_incident"
-	ynh_app_setting_set $app contact_mail "$contact_mail"
-	ynh_app_setting_set $app auto_deploy "$auto_deploy"
+	ynh_app_setting_set --app=$app --key=pub_key --value="$pub_key"
+	ynh_app_setting_set --app=$app --key=auto_detect_failure --value="$auto_detect_failure"
+	ynh_app_setting_set --app=$app --key=delay_before_incident --value="$delay_before_incident"
+	ynh_app_setting_set --app=$app --key=contact_mail --value="$contact_mail"
+	ynh_app_setting_set --app=$app --key=auto_deploy --value="$auto_deploy"
 fi
-ynh_app_setting_set $app admin_mail_html "1"
+ynh_app_setting_set --app=$app --key=admin_mail_html --value=1
 
 #=================================================
 # STANDARD MODIFICATIONS
 #=================================================
 # INSTALL DEPENDENCIES
 #=================================================
-ynh_script_progression --message="Install dependencies" --weight=14
+ynh_script_progression --message="Installing dependencies..." --weight=14
 
 ynh_install_app_dependencies $app_depencencies
 
 #=================================================
 # DOWNLOAD, CHECK AND UNPACK SOURCE
 #=================================================
-ynh_script_progression --message="Download, check and unpack source" --weight=4
+ynh_script_progression --message="Setting up source files..." --weight=4
 
-ynh_app_setting_set $app final_path $final_path
+ynh_app_setting_set --app=$app --key=final_path --value=$final_path
 # Download, check integrity, uncompress and patch the source from app.src
-ynh_setup_source "$final_path"
+ynh_setup_source --dest_dir="$final_path"
 
 #=================================================
 # SPECIFIC SETUP
@@ -119,29 +118,29 @@ then
 	#=================================================
 	# MODIFY THE CONFIG
 	#=================================================
-	ynh_script_progression --message="Configure Fallback"
+	ynh_script_progression --message="Configuring Fallback..."
 
 	configfile="$final_path/send_process/config.conf"
 	cp "${configfile}.modele" "$configfile"
-	ynh_replace_string "ssh_user=.*" "ssh_user=$app" "$configfile"
-	ynh_replace_string "ssh_host=.*" "ssh_host=$ssh_host" "$configfile"
-	ynh_replace_string "ssh_port=.*" "ssh_port=$ssh_port" "$configfile"
+	ynh_replace_string --match_string="ssh_user=.*" --replace_string="ssh_user=$app" --target_file="$configfile"
+	ynh_replace_string --match_string="ssh_host=.*" --replace_string="ssh_host=$ssh_host" --target_file="$configfile"
+	ynh_replace_string --match_string="ssh_port=.*" --replace_string="ssh_port=$ssh_port" --target_file="$configfile"
 
 	data_dir="/home/yunohost.app/$app/fallback_backup"
-	ynh_replace_string "main_storage_dir=.*" "main_storage_dir=$data_dir" "$configfile"
-	ynh_replace_string "encrypt=.*" "encrypt=$encrypt" "$configfile"
+	ynh_replace_string --match_string="main_storage_dir=.*" --replace_string="main_storage_dir=$data_dir" --target_file="$configfile"
+	ynh_replace_string --match_string="encrypt=.*" --replace_string="encrypt=$encrypt" --target_file="$configfile"
 
 	#=================================================
 	# CREATE A SSH KEY
 	#=================================================
-	ynh_script_progression --message="Create a ssh key" --weight=3
+	ynh_script_progression --message="Creating a ssh key..." --weight=3
 
 	ssh_key="$final_path/send_process/ssh_key"
 	ssh-keygen -t rsa -b 4096 -N "" -f "$ssh_key" > /dev/null
 	chown root: "$ssh_key"
 	chmod 400 "$ssh_key"
 	pub_key="${ssh_key}.pub"
-	ynh_replace_string "ssh_key=.*" "ssh_key=$ssh_key" "$configfile"
+	ynh_replace_string --match_string="ssh_key=.*" --replace_string="ssh_key=$ssh_key" --target_file="$configfile"
 
 	mkdir -p /root/.ssh
 	ssh-keyscan -t rsa $ssh_host >> /root/.ssh/known_hosts
@@ -149,11 +148,11 @@ then
 	#=================================================
 	# FILL THE APPS LIST
 	#=================================================
-	ynh_script_progression --message="Fill the apps list"
+	ynh_script_progression --message="Filling the apps list..."
 
 	echo "#000# For each app you want to backup, precede by [.]" > "$final_path/send_process/app_list"
 	yunohost app list -i | grep id: | sed 's/.*id:/[]:/' >> "$final_path/send_process/app_list"
-	ynh_replace_string ".*: fallback" "[-]: fallback" "$final_path/send_process/app_list"
+	ynh_replace_string --match_string=".*: fallback" --replace_string="[-]: fallback" --target_file="$final_path/send_process/app_list"
 
 	#=================================================
 	# SET THE CRON
@@ -173,7 +172,7 @@ then
 	#=================================================
 
 	passkey="$final_path/send_process/passkey"
-	ynh_replace_string "pass_file=.*" "pass_file=$passkey" "$configfile"
+	ynh_replace_string --match_string="pass_file=.*" --replace_string="pass_file=$passkey" --target_file="$configfile"
 	ynh_print_OFF; echo "$encryption_pwd" > "$passkey"; ynh_print_ON
 	chmod 400 "$passkey"
 
@@ -182,7 +181,7 @@ then
 	#=================================================
 
 	# Calculate and store the config file checksum into the app settings
-	ynh_store_file_checksum "$configfile"
+	ynh_store_file_checksum --file="$configfile"
 
 else
 	#=================================================
@@ -190,9 +189,9 @@ else
 	#=================================================
 	# CREATE DEDICATED USER
 	#=================================================
-	ynh_script_progression --message="Create a dedicated user" --weight=2
+	ynh_script_progression --message="Configuring system user..." --weight=2
 
-	if ! ynh_system_user_exists "$app"
+	if ! ynh_system_user_exists --username=$app
 	then
 		useradd -d "/home/$app" --system --user-group $app --shell /bin/bash
 	fi
@@ -211,14 +210,14 @@ else
 	# SET THE USER IN DEPLOY_FALLBACK SCRIPTS
 	#=================================================
 
-	ynh_replace_string "\(local_archive_dir=\"/home/\)fallback" "\1$app" "$final_path/deploy_process/deploy_fallback.sh"
-	ynh_replace_string "\(local_archive_dir=\"/home/\)fallback" "\1$app" "$final_path/deploy_process/close_fallback.sh"
-	ynh_replace_string "\(local_archive_dir=\"/home/\)fallback" "\1$app" "$final_path/deploy_process/auto_deploy_fallback.sh"
+	ynh_replace_string --match_string="\(local_archive_dir=\"/home/\)fallback" --replace_string="\1$app" --target_file="$final_path/deploy_process/deploy_fallback.sh"
+	ynh_replace_string --match_string="\(local_archive_dir=\"/home/\)fallback" --replace_string="\1$app" --target_file="$final_path/deploy_process/close_fallback.sh"
+	ynh_replace_string --match_string="\(local_archive_dir=\"/home/\)fallback" --replace_string="\1$app" --target_file="$final_path/deploy_process/auto_deploy_fallback.sh"
 
 	#=================================================
 	# SET A CHROOT FOR THE SSH USER
 	#=================================================
-	ynh_script_progression --message="Set a chroot for the ssh user" --weight=2
+	ynh_script_progression --message="Setting a chroot for the ssh user..." --weight=2
 
 	chroot_dir="/home/$app"
 
@@ -227,7 +226,7 @@ else
 
 	# Copy the ld-linux file, according to the architecture
 	copy_ld-linux () {
-		! test -e "$1" || sudo cp "$1" "$chroot_dir/$2/"
+		! test -e "$1" || cp "$1" "$chroot_dir/$2/"
 	}
 	copy_ld-linux /lib/ld-linux.so.2 lib
 	copy_ld-linux /lib64/ld-linux-x86-64.so.2 lib64
@@ -236,7 +235,7 @@ else
 	# Copy binary and its libraries into the chroot.
 	ssh_chroot_copy_binary () {
 		# Find and copy the binary file
-		sudo cp `which $1` "$chroot_dir/bin/$(basename $1)"
+		cp `which $1` "$chroot_dir/bin/$(basename $1)"
 		# Then search for its libraries
 		while read lib_file
 		do
@@ -245,7 +244,7 @@ else
 			then
 				# Keep only the path of this lib
 				local lib_path=$(echo "$lib_file" | awk '{print $3}')
-				sudo cp $lib_path "$chroot_dir/lib/"
+				cp $lib_path "$chroot_dir/lib/"
 			fi
 		done <<< "$(ldd `which $1`)"
 	}
@@ -275,7 +274,7 @@ else
 	#=================================================
 	# CONFIGURE AUTO DEPLOYMENT
 	#=================================================
-	ynh_script_progression --message="Configure auto deployment"
+	ynh_script_progression --message="Configuring auto deployment..."
 
 	auto_check_config_file="$final_path/deploy_process/auto_check.conf"
 	cp "${auto_check_config_file}.modele" "$auto_check_config_file"
@@ -294,23 +293,23 @@ else
 		esac
 
 		# Fill the config file
-		ynh_replace_string "delay_before_incident=.*" "delay_before_incident=$delay_before_incident" "$auto_check_config_file"
+		ynh_replace_string --match_string="delay_before_incident=.*" --replace_string="delay_before_incident=$delay_before_incident" --target_file="$auto_check_config_file"
 		# Send email at root if there no email
 		if [ -z "$contact_mail" ]
 		then
-			ynh_print_info "Seems that you forgot to fill in a contact email address. root is going to be used instead."
+			ynh_print_info --message="Seems that you forgot to fill in a contact email address. root is going to be used instead."
 			contact_mail=root
-			ynh_app_setting_set $app contact_mail "$contact_mail"
+			ynh_app_setting_set --app=$app --key=contact_mail --value="$contact_mail"
 		fi
-		ynh_replace_string "contact_mail=.*" "contact_mail=$contact_mail" "$auto_check_config_file"
-		ynh_replace_string "auto_deploy=.*" "auto_deploy=$auto_deploy" "$auto_check_config_file"
-		ynh_replace_string "__FINAL_PATH__" "$final_path" "$auto_check_config_file"
+		ynh_replace_string --match_string="contact_mail=.*" --replace_string="contact_mail=$contact_mail" --target_file="$auto_check_config_file"
+		ynh_replace_string --match_string="auto_deploy=.*" --replace_string="auto_deploy=$auto_deploy" --target_file="$auto_check_config_file"
+		ynh_replace_string --match_string="__FINAL_PATH__" --replace_string="$final_path" --target_file="$auto_check_config_file"
 
 		# Put in place the cron file
-		ynh_replace_string "__FINAL_PATH__" "$final_path" "$final_path/deploy_process/auto_deploy_fallback.cron"
-		sudo cp $final_path/deploy_process/auto_deploy_fallback.cron /etc/cron.d/auto_deploy_fallback
+		ynh_replace_string --match_string="__FINAL_PATH__" --replace_string="$final_path" --target_file="$final_path/deploy_process/auto_deploy_fallback.cron"
+		cp $final_path/deploy_process/auto_deploy_fallback.cron /etc/cron.d/auto_deploy_fallback
 		# And configure it
-		ynh_replace_string "? ?" "$cron_delay" "/etc/cron.d/auto_deploy_fallback"
+		ynh_replace_string --match_string="? ?" --replace_string="$cron_delay" --target_file="/etc/cron.d/auto_deploy_fallback"
 	fi
 
 	#=================================================
@@ -318,7 +317,7 @@ else
 	#=================================================
 
 	# Calculate and store the config file checksum into the app settings
-	ynh_store_file_checksum "$auto_check_config_file"
+	ynh_store_file_checksum --file="$auto_check_config_file"
 fi
 
 #=================================================
@@ -338,8 +337,8 @@ fi
 # CONFIGURE HOOKS
 #=================================================
 
-ynh_replace_string "__FINALPATH__" "$final_path" "../hooks/post_app_install"
-ynh_replace_string "__FINALPATH__" "$final_path" "../hooks/post_app_remove"
+ynh_replace_string --match_string="__FINALPATH__" --replace_string="$final_path" --target_file="../hooks/post_app_install"
+ynh_replace_string --match_string="__FINALPATH__" --replace_string="$final_path" --target_file="../hooks/post_app_remove"
 
 #=================================================
 # GENERIC FINALIZATION
@@ -355,7 +354,7 @@ then
 	#=================================================
 	# SETUP LOGROTATE
 	#=================================================
-	ynh_script_progression --message="Configure logrotate"
+	ynh_script_progression --message="Configuring log rotation..."
 
 	mkdir -p /var/log/$app
 	ln -s /var/log/$app/$app.log "$final_path/send_process/send_backup.log"
@@ -366,10 +365,10 @@ then
 	# DISCLAIMER
 	#=================================================
 
-	ynh_print_info "
+	ynh_print_info --message="
 By default, no apps will be backuped for your fallback server. To select which apps you want to backup, please have a look at the app_list file in /home/yunohost.app/$app/app_list.
 Please take note of your public ssh key. This will be usefull during the installation on your fallback server." >&2
-	ynh_print_info "$(cat "$pub_key")" >&2
+	ynh_print_info --message="$(cat "$pub_key")" >&2
 fi
 
 #=================================================
@@ -433,11 +432,11 @@ You can also find some specific actions for this app by using the experimental _
 
 If you're facing an issue or want to improve this app, please open a new issue in this __URL_TAG1__project__URL_TAG2__https://github.com/YunoHost-Apps/fallback_ynh__URL_TAG3__." > mail_to_send
 
-ynh_send_readme_to_admin --app_message="mail_to_send" --recipients="root" --type="install"
+ynh_send_readme_to_admin --app_message="mail_to_send" --recipients="root" --type=install
 ynh_print_ON
 
 #=================================================
 # END OF SCRIPT
 #=================================================
 
-ynh_script_progression --message="Installation completed" --last
+ynh_script_progression --message="Installation of $app completed" --last
