@@ -4,6 +4,12 @@ Changelog
 ## Unreleased
 - Nothing for now...
 
+## [0.8~ynh2](https://github.com/YunoHost-Apps/fallback_ynh/pull/21) - 2020-01-04
+
+#### Fixed
+- [Fix config-panel](https://github.com/YunoHost-Apps/fallback_ynh/pull/21/commits/c311c1d1de9ad1a0bdefbe961e87cbb1886b9978)
+
+
 ## [0.8~ynh1](https://github.com/YunoHost-Apps/fallback_ynh/pull/20) - 2019-11-20
 
 #### Changed
@@ -13,6 +19,7 @@ Changelog
 #### Added
 - [Add a changelog](https://github.com/YunoHost-Apps/fallback_ynh/commit/bde776613f72d3f851f6f86e766a5559c28ba684)
 * [Add actions and use toml](https://github.com/YunoHost-Apps/fallback_ynh/commit/88ddc2d61050809b85f2be857dc4f78a39da2388)
+
 
 ## [0.71~ynh3](https://github.com/YunoHost-Apps/fallback_ynh/pull/14) - 2019-02-03
 

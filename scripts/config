@@ -48,7 +48,6 @@ get_config_value() {
 # Encryption
 old_encrypt="$(get_config_value encrypt config_file_main)"
 encrypt="${YNH_CONFIG_MAIN_SERVER_ENCRYPTION_ENCRYPT:-$old_encrypt}"
-encrypt=$(bool_to_true_false $encrypt)
 if [ -z "$encrypt" ]; then
 	encrypt=false
 fi
@@ -71,7 +70,6 @@ pub_key="${YNH_CONFIG_FALLBACK_SERVER_SSH_CONFIG_PUB_KEY:-$old_pub_key}"
 # auto_detect_failure
 old_auto_detect_failure=$(ynh_app_setting_get --app=$app --key=auto_detect_failure)
 auto_detect_failure="${YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_AUTO_DETECT_FAILURE:-$old_auto_detect_failure}"
-auto_detect_failure=$(bool_to_true_false $auto_detect_failure)
 if [ -z "$auto_detect_failure" ]; then
 	auto_detect_failure=false
 fi
@@ -84,14 +82,12 @@ contact_mail="${YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_CONTACT_MAIL:-$old_contac
 # auto_deploy
 old_auto_deploy="$(get_config_value auto_deploy config_file_fallback)"
 auto_deploy="${YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_AUTO_DEPLOY:-$old_auto_deploy}"
-auto_deploy=$(bool_to_true_false $auto_deploy)
 if [ -z "$auto_deploy" ]; then
 	auto_deploy=false
 fi
 
 # Type of admin mail configuration
 old_admin_mail_html="$(ynh_app_setting_get --app=$app --key=admin_mail_html)"
-old_admin_mail_html=$(bool_to_true_false $old_admin_mail_html)
 admin_mail_html="${YNH_CONFIG_MAIN_GLOBAL_CONFIG_EMAIL_TYPE:-$old_admin_mail_html}"
 
 #=================================================
@@ -100,21 +96,22 @@ admin_mail_html="${YNH_CONFIG_MAIN_GLOBAL_CONFIG_EMAIL_TYPE:-$old_admin_mail_htm
 
 show_config() {
 	# here you are supposed to read some config file/database/other then print the values
-	# echo "YNH_CONFIG_${PANEL_ID}_${SECTION_ID}_${OPTION_ID}=value"
-	echo "YNH_CONFIG_MAIN_SERVER_ENCRYPTION_ENCRYPT=$encrypt"
-	echo "YNH_CONFIG_MAIN_SERVER_ENCRYPTION_ENCRYPTION_PWD="
+	# ynh_return "YNH_CONFIG_${PANEL_ID}_${SECTION_ID}_${OPTION_ID}=value"
 
-	echo "YNH_CONFIG_MAIN_SERVER_SSH_CONFIG_SSH_HOST=$ssh_host"
-	echo "YNH_CONFIG_MAIN_SERVER_SSH_CONFIG_SSH_PORT=$ssh_port"
+	ynh_return "YNH_CONFIG_MAIN_SERVER_ENCRYPTION_ENCRYPT=$encrypt"
+	ynh_return "YNH_CONFIG_MAIN_SERVER_ENCRYPTION_ENCRYPTION_PWD="
+
+	ynh_return "YNH_CONFIG_MAIN_SERVER_SSH_CONFIG_SSH_HOST=$ssh_host"
+	ynh_return "YNH_CONFIG_MAIN_SERVER_SSH_CONFIG_SSH_PORT=$ssh_port"
 
 
-	echo "YNH_CONFIG_FALLBACK_SERVER_SSH_CONFIG_PUB_KEY=$pub_key"
-	echo "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_AUTO_DETECT_FAILURE=$auto_detect_failure"
-	echo "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_DELAY_BEFORE_INCIDENT=$delay_before_incident"
-	echo "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_CONTACT_MAIL=$contact_mail"
-	echo "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_AUTO_DEPLOY=$auto_deploy"
+	ynh_return "YNH_CONFIG_FALLBACK_SERVER_SSH_CONFIG_PUB_KEY=$pub_key"
+	ynh_return "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_AUTO_DETECT_FAILURE=$auto_detect_failure"
+	ynh_return "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_DELAY_BEFORE_INCIDENT=$delay_before_incident"
+	ynh_return "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_CONTACT_MAIL=$contact_mail"
+	ynh_return "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_AUTO_DEPLOY=$auto_deploy"
 
-	echo "YNH_CONFIG_MAIN_GLOBAL_CONFIG_EMAIL_TYPE=$admin_mail_html"
+	ynh_return "YNH_CONFIG_MAIN_GLOBAL_CONFIG_EMAIL_TYPE=$admin_mail_html"
 }
 
 #=================================================
@@ -136,8 +133,6 @@ apply_config() {
 			chmod 400 "$passkey"
 			ynh_replace_string --match_string="^pass_file=.*" --replace_string="pass_file=$passkey" --target_file="$config_file_main"
 		fi
-
-		encrypt=$(bool_to_01 $encrypt)
 
 		# Change encrypt in the config file
 		ynh_replace_string --match_string="^encrypt=.*" --replace_string="encrypt=$encrypt" --target_file="$config_file_main"
@@ -191,14 +186,12 @@ apply_config() {
 		# Change contact_mail in the config file
 		ynh_replace_string --match_string="^contact_mail=.*" --replace_string="contact_mail=$contact_mail" --target_file="$config_file_fallback"
 		ynh_app_setting_set --app=$app --key=contact_mail --value="$contact_mail"
-		auto_deploy=$(bool_to_01 $auto_deploy)
 		# Change auto_deploy in the config file
 		ynh_replace_string --match_string="^auto_deploy=.*" --replace_string="auto_deploy=$auto_deploy" --target_file="$config_file_fallback"
 		ynh_app_setting_set --app=$app --key=auto_deploy --value="$auto_deploy"
 	fi
 
 	# Set admin_mail_html
-	admin_mail_html=$(bool_to_01 $admin_mail_html)
 	ynh_app_setting_set --app=$app --key=admin_mail_html --value="$admin_mail_html"
 }
 
