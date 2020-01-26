@@ -69,8 +69,12 @@ name = "Fallback, fallback server configuration"
 [global_config]
 name = "Global configuration"
 
-    [global_config.email_type]
-    ask = "Send HTML email to admin ?"
-    type = "boolean"
-    default = true
-    help = "Allow app scripts to send HTML mails instead of plain text."
+    [global_config.email]
+    name = "Email configuration"
+    
+
+        [global_config.email.email_type]
+        ask = "Send HTML email to admin ?"
+        type = "boolean"
+        default = true
+        help = "Allow app scripts to send HTML mails instead of plain text."
