@@ -25,6 +25,7 @@ name = "Fallback, main server configuration"
         ask = "Domain name for the fallback server ?"
         type = "text"
         help = "This server has to be up, for the ssh-keyscan command."
+        optional = true
 
         [main_server.ssh_config.ssh_port]
         ask = "Port for the ssh connection to the fallback server ?"
@@ -40,6 +41,7 @@ name = "Fallback, fallback server configuration"
         [fallback_server.ssh_config.pub_key]
         ask = "Public key from your main server ?"
         type = "text"
+        optional = true
 
     [fallback_server.auto_deploy]
     name = "Auto deployement"
@@ -64,6 +66,7 @@ name = "Fallback, fallback server configuration"
         [fallback_server.auto_deploy.auto_deploy]
         ask = "Deploy automatically the fallback in case of failure ?"
         type = "boolean"
+        default = true
         optional = false
 
 [global_config]
