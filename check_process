@@ -7,6 +7,13 @@
 		ssh_port="22"
 		auto_detect_failure=0
 		auto_deploy=0
+    ; Actions
+    ; Config_panel
+        main_server.encryption.encrypt=0|1
+        main_server.encryption.encryption_pwd=password1
+        main_server.ssh_config.ssh_host=domain.tld
+        main_server.ssh_config.ssh_port=23
+        global.config.email_type=0|1
 	; Checks
 		pkg_linter=1
 		setup_sub_dir=0
@@ -20,6 +27,8 @@
 		multi_instance=0
 		port_already_use=0
 		change_url=0
+        actions=1
+        config_panel=1
 ;; Test install fallback server
 	; Manifest
 		install_type="fallback server"
@@ -29,15 +38,25 @@
 		delay_before_incident="1h"
 		contact_mail="none"
 		auto_deploy=1
+    ; Actions
+    ; Config_panel
+        fallback_server.ssh_config.pub_key=my_public_key
+        fallback_server.auto_deploy.auto_detect_failure=0|1
+        fallback_server.auto_deploy.delay_before_incident=120
+        fallback_server.auto_deploy.contact_mail=none@domain.tld
+        fallback_server.auto_deploy.auto_deploy=1|0
+        global.config.email_type=0|1
 	; Checks
 		setup_nourl=1
 		upgrade=1
 		backup_restore=1
+        actions=1
+        config_panel=1
 ;;; Levels
 	Level 5=auto
 ;;; Options
 Email=
-Notification=down
+Notification=change
 ;;; Upgrade options
 	; commit=3d20e9d852fcf695a1a1419317a81bf315a009ce
 		name=18 Sep 2017 v0.3

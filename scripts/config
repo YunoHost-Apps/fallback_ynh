@@ -49,7 +49,7 @@ get_config_value() {
 old_encrypt="$(get_config_value encrypt config_file_main)"
 encrypt="${YNH_CONFIG_MAIN_SERVER_ENCRYPTION_ENCRYPT:-$old_encrypt}"
 if [ -z "$encrypt" ]; then
-	encrypt=false
+	encrypt=0
 fi
 # Encryption password
 ynh_print_OFF
@@ -71,7 +71,7 @@ pub_key="${YNH_CONFIG_FALLBACK_SERVER_SSH_CONFIG_PUB_KEY:-$old_pub_key}"
 old_auto_detect_failure=$(ynh_app_setting_get --app=$app --key=auto_detect_failure)
 auto_detect_failure="${YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_AUTO_DETECT_FAILURE:-$old_auto_detect_failure}"
 if [ -z "$auto_detect_failure" ]; then
-	auto_detect_failure=false
+	auto_detect_failure=0
 fi
 # delay_before_incident
 old_delay_before_incident="$(get_config_value delay_before_incident config_file_fallback)"
@@ -83,12 +83,12 @@ contact_mail="${YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_CONTACT_MAIL:-$old_contac
 old_auto_deploy="$(get_config_value auto_deploy config_file_fallback)"
 auto_deploy="${YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_AUTO_DEPLOY:-$old_auto_deploy}"
 if [ -z "$auto_deploy" ]; then
-	auto_deploy=false
+	auto_deploy=0
 fi
 
 # Type of admin mail configuration
 old_admin_mail_html="$(ynh_app_setting_get --app=$app --key=admin_mail_html)"
-admin_mail_html="${YNH_CONFIG_MAIN_GLOBAL_CONFIG_EMAIL_TYPE:-$old_admin_mail_html}"
+admin_mail_html="${YNH_CONFIG_GLOBAL_CONFIG_EMAIL_TYPE:-$old_admin_mail_html}"
 
 #=================================================
 # SHOW_CONFIG FUNCTION FOR 'SHOW' COMMAND
@@ -104,14 +104,13 @@ show_config() {
 	ynh_return "YNH_CONFIG_MAIN_SERVER_SSH_CONFIG_SSH_HOST=$ssh_host"
 	ynh_return "YNH_CONFIG_MAIN_SERVER_SSH_CONFIG_SSH_PORT=$ssh_port"
 
-
 	ynh_return "YNH_CONFIG_FALLBACK_SERVER_SSH_CONFIG_PUB_KEY=$pub_key"
 	ynh_return "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_AUTO_DETECT_FAILURE=$auto_detect_failure"
 	ynh_return "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_DELAY_BEFORE_INCIDENT=$delay_before_incident"
 	ynh_return "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_CONTACT_MAIL=$contact_mail"
 	ynh_return "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_AUTO_DEPLOY=$auto_deploy"
 
-	ynh_return "YNH_CONFIG_MAIN_GLOBAL_CONFIG_EMAIL_TYPE=$admin_mail_html"
+	ynh_return "YNH_CONFIG_GLOBAL_CONFIG_EMAIL_TYPE=$admin_mail_html"
 }
 
 #=================================================
@@ -122,7 +121,7 @@ apply_config() {
 	if [ "$install_type" = "main" ]
 	then
 		# Change the password if needed
-		if [ "$encrypt" = "true" ]
+		if [ "$encrypt" = "1" ]
 		then
 			ynh_print_OFF
 			test -n "$encrypt_password" || ynh_die --message="The password for encryption can't be empty if you choose to enable encryption."
@@ -151,13 +150,13 @@ apply_config() {
 			echo "$pub_key" >> "/home/$app/.ssh/authorized_keys"
 
 		# Change auto_detect_failure feature
-		if [ "$auto_detect_failure" = "true" ] && [ "$old_auto_detect_failure" = "0" ]
+		if [ "$auto_detect_failure" = "1" ] && [ "$old_auto_detect_failure" = "0" ]
 		then
 			# Put in place the cron file
 			ynh_replace_string --match_string="__FINAL_PATH__" --replace_string="$final_path" --target_file="$final_path/deploy_process/auto_deploy_fallback.cron"
 			cp $final_path/deploy_process/auto_deploy_fallback.cron /etc/cron.d/auto_deploy_fallback
 			ynh_app_setting_set --app=$app --key=auto_detect_failure --value=1
-		elif [ "$auto_detect_failure" = "false" ] && [ "$old_auto_detect_failure" = "1" ]
+		elif [ "$auto_detect_failure" = "0" ] && [ "$old_auto_detect_failure" = "1" ]
 		then
 			rm "/etc/cron.d/auto_deploy_fallback"
 			ynh_app_setting_set --app=$app --key=auto_detect_failure --value=0

@@ -10,10 +10,18 @@ source scripts/_common.sh
 source /usr/share/yunohost/helpers
 
 #=================================================
+# MANAGE SCRIPT FAILURE
+#=================================================
+
+# Exit if an error occurs during the execution of the script
+ynh_abort_if_errors
+
+#=================================================
 # RETRIEVE ARGUMENTS
 #=================================================
 
 app=${YNH_APP_INSTANCE_NAME:-$YNH_APP_ID}
+
 final_path=$(ynh_app_setting_get --app=$app --key=final_path)
 ssh_host=$(ynh_app_setting_get --app=$app --key=ssh_host)
 ssh_port=$(ynh_app_setting_get --app=$app --key=ssh_port)
@@ -21,6 +29,7 @@ encrypt=$(ynh_app_setting_get --app=$app --key=encrypt)
 delay_before_incident=$(ynh_app_setting_get --app=$app --key=delay_before_incident)
 contact_mail=$(ynh_app_setting_get --app=$app --key=contact_mail)
 auto_deploy=$(ynh_app_setting_get --app=$app --key=auto_deploy)
+install_type=$(ynh_app_setting_get --app=$app --key=install_type)
 
 #=================================================
 # SORT OUT THE CONFIG FILE TO HANDLE
