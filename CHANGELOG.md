@@ -4,6 +4,12 @@ Changelog
 ## Unreleased
 - Nothing for now...
 
+## [0.8~ynh3](https://github.com/YunoHost-Apps/fallback_ynh/pull/22) - 2020-04-09
+
+#### Fixed
+- [Actions and config_panel tests](https://github.com/YunoHost-Apps/fallback_ynh/commit/f50ae479b740c20e3773497d44c0edd4bd143dd7)
+
+
 ## [0.8~ynh2](https://github.com/YunoHost-Apps/fallback_ynh/pull/21) - 2020-01-04
 
 #### Fixed
