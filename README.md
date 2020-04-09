@@ -1,6 +1,6 @@
 # Fallback for YunoHost
 
-[![Integration level](https://dash.yunohost.org/integration/fallback.svg)](https://dash.yunohost.org/appci/app/fallback)  
+[![Integration level](https://dash.yunohost.org/integration/fallback.svg)](https://dash.yunohost.org/appci/app/fallback) ![](https://ci-apps.yunohost.org/ci/badges/fallback.status.svg) [![](https://ci-apps.yunohost.org/ci/badges/fallback.maintain.svg)](https://github.com/YunoHost/Apps/#what-to-do-if-i-cant-maintain-my-app-anymore-)  
 [![Install Fallback with YunoHost](https://install-app.yunohost.org/install-with-yunohost.png)](https://install-app.yunohost.org/?app=fallback)
 
 *[Lire ce readme en français.](./README_fr.md)*
@@ -39,7 +39,7 @@ Not relevant.
 
 * x86-64b - [![](https://ci-apps.yunohost.org/ci/logs/fallback%20%28Apps%29.svg)](https://ci-apps.yunohost.org/ci/apps/fallback/)
 * ARMv8-A - [![](https://ci-apps-arm.yunohost.org/ci/logs/fallback%20%28Apps%29.svg)](https://ci-apps-arm.yunohost.org/ci/apps/fallback/)
-* Jessie x86-64b - [![](https://ci-stretch.nohost.me/ci/logs/fallback%20%28Apps%29.svg)](https://ci-stretch.nohost.me/ci/apps/fallback/)
+* Buster x86-64b - [![](https://ci-buster.nohost.me/ci/logs/fallback%20%28Apps%29.svg)](https://ci-buster.nohost.me/ci/apps/fallback/)
 
 ## Limitations
 
