@@ -88,7 +88,7 @@ fi
 
 # Type of admin mail configuration
 old_admin_mail_html="$(ynh_app_setting_get --app=$app --key=admin_mail_html)"
-admin_mail_html="${YNH_CONFIG_MAIN_GLOBAL_CONFIG_EMAIL_TYPE:-$old_admin_mail_html}"
+admin_mail_html="${YNH_CONFIG_GLOBAL_CONFIG_EMAIL_TYPE:-$old_admin_mail_html}"
 
 #=================================================
 # SHOW_CONFIG FUNCTION FOR 'SHOW' COMMAND
@@ -104,14 +104,13 @@ show_config() {
 	ynh_return "YNH_CONFIG_MAIN_SERVER_SSH_CONFIG_SSH_HOST=$ssh_host"
 	ynh_return "YNH_CONFIG_MAIN_SERVER_SSH_CONFIG_SSH_PORT=$ssh_port"
 
-
 	ynh_return "YNH_CONFIG_FALLBACK_SERVER_SSH_CONFIG_PUB_KEY=$pub_key"
 	ynh_return "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_AUTO_DETECT_FAILURE=$auto_detect_failure"
 	ynh_return "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_DELAY_BEFORE_INCIDENT=$delay_before_incident"
 	ynh_return "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_CONTACT_MAIL=$contact_mail"
 	ynh_return "YNH_CONFIG_FALLBACK_SERVER_AUTO_DEPLOY_AUTO_DEPLOY=$auto_deploy"
 
-	ynh_return "YNH_CONFIG_MAIN_GLOBAL_CONFIG_EMAIL_TYPE=$admin_mail_html"
+	ynh_return "YNH_CONFIG_GLOBAL_CONFIG_EMAIL_TYPE=$admin_mail_html"
 }
 
 #=================================================

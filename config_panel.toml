@@ -1,78 +1,87 @@
 version = "0.1"
 name = "Fallback configuration panel"
 
-[main]
-name = "Fallback configuration"
+[main_server]
+name = "Fallback, main server configuration"
 
-    [main.main_server]
-    name = "Fallback, main server configuration"
 
-        [main.main_server.encryption]
-        name = "Encryption"
+    [main_server.encryption]
+    name = "Encryption"
 
-            [main.main_server.encryption.encrypt]
-            ask = "Do you want to encrypt your backups ?"
-            type = "boolean"
-            default = true
+        [main_server.encryption.encrypt]
+        ask = "Do you want to encrypt your backups ?"
+        type = "boolean"
+        default = true
 
-            [main.main_server.encryption.encryption_pwd]
-            ask = "Set the password for encryption"
-            type = "password"
-            optional = true
-            help = "A password is needed if encryption is activated."
+        [main_server.encryption.encryption_pwd]
+        ask = "Set the password for encryption"
+        type = "password"
+        optional = true
+        help = "A password is needed if encryption is activated."
 
-        [main.main_server.ssh_config]
-        name = "ssh configuration"
 
-            [main.main_server.ssh_config.ssh_host]
-            ask = "Domain name for the fallback server ?"
-            type = "text"
-            help = "This server has to be up, for the ssh-keyscan command."
+    [main_server.ssh_config]
+    name = "ssh configuration"
 
-            [main.main_server.ssh_config.ssh_port]
-            ask = "Port for the ssh connection to the fallback server ?"
-            type = "number"
-            default = 22
+        [main_server.ssh_config.ssh_host]
+        ask = "Domain name for the fallback server ?"
+        type = "text"
+        optional = true
+        help = "This server has to be up, for the ssh-keyscan command."
 
-    [main.fallback_server]
-    name = "Fallback, fallback server configuration"
+        [main_server.ssh_config.ssh_port]
+        ask = "Port for the ssh connection to the fallback server ?"
+        type = "number"
+        default = 22
+        optional = true
 
-        [main.fallback_server.ssh_config]
-        name = "ssh configuration"
+        
+[fallback_server]
+name = "Fallback, fallback server configuration"
 
-            [main.fallback_server.ssh_config.pub_key]
-            ask = "Public key from your main server ?"
-            type = "text"
 
-        [main.fallback_server.auto_deploy]
-        name = "Auto deployement"
+    [fallback_server.ssh_config]
+    name = "ssh configuration"
 
-            [main.fallback_server.auto_deploy.auto_detect_failure]
-            ask = "Auto detect a failure of the main server ?"
-            type = "boolean"
-            default = true
+        [fallback_server.ssh_config.pub_key]
+        ask = "Public key from your main server ?"
+        type = "text"
+        optional = true
 
-            [main.fallback_server.auto_deploy.delay_before_incident]
-            ask = "Delay before declaring an incident with the main server."
-            type = "number"
-            default = 60
-            optional = true
-            help = "Value in minutes"
 
-            [main.fallback_server.auto_deploy.contact_mail]
-            ask = "Email address to contact in case of failure."
-            type = "text"
-            optional = true
+    [fallback_server.auto_deploy]
+    name = "Auto deployement"
 
-            [main.fallback_server.auto_deploy.auto_deploy]
-            ask = "Deploy automatically the fallback in case of failure ?"
-            type = "boolean"
-            optional = false
+        [fallback_server.auto_deploy.auto_detect_failure]
+        ask = "Auto detect a failure of the main server ?"
+        type = "boolean"
+        default = true
 
-    [main.global_config]
+        [fallback_server.auto_deploy.delay_before_incident]
+        ask = "Delay before declaring an incident with the main server."
+        type = "number"
+        default = 60
+        optional = true
+        help = "Value in minutes"
+
+        [fallback_server.auto_deploy.contact_mail]
+        ask = "Email address to contact in case of failure."
+        type = "text"
+        optional = true
+
+        [fallback_server.auto_deploy.auto_deploy]
+        ask = "Deploy automatically the fallback in case of failure ?"
+        type = "boolean"
+        default = false
+
+
+[global]
+name = "Global configuration"
+
+    [global.config]
     name = "Global configuration"
 
-        [main.global_config.email_type]
+        [global.config.email_type]
         ask = "Send HTML email to admin ?"
         type = "boolean"
         default = true
