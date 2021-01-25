@@ -1,5 +1,5 @@
 SOURCE_URL=https://github.com/maniackcrudelis/Fallback-server/archive/master.zip
-SOURCE_SUM=1ba90fc643bf5b20d8ffeacb3d5d0a2d
+SOURCE_SUM=b21ccc8c43b9f8ac32505018b91e563f
 SOURCE_SUM_PRG=md5sum
 SOURCE_FORMAT=zip
 SOURCE_IN_SUBDIR=true
