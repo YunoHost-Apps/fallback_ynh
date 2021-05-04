@@ -4,6 +4,11 @@ Changelog
 ## Unreleased
 - Nothing for now...
 
+## 0.9~ynh1 - 2021-05-04
+
+#### Fixed
+- Fix YunoHost 4.1
+
 ## [0.8~ynh3](https://github.com/YunoHost-Apps/fallback_ynh/pull/22) - 2020-04-09
 
 #### Fixed
