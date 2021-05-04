@@ -1,6 +1,6 @@
-SOURCE_URL=https://github.com/maniackcrudelis/Fallback-server/archive/v0.8.tar.gz
-SOURCE_SUM=1561bd2b5423e607cdf94077698cd114
+SOURCE_URL=https://github.com/maniackcrudelis/Fallback-server/archive/master.zip
+SOURCE_SUM=b21ccc8c43b9f8ac32505018b91e563f
 SOURCE_SUM_PRG=md5sum
-SOURCE_FORMAT=tar.gz
+SOURCE_FORMAT=zip
 SOURCE_IN_SUBDIR=true
 SOURCE_FILENAME=
