@@ -1,4 +1,4 @@
-version = "0.1"
+version = "1.0"
 name = "Fallback configuration panel"
 
 [main_server]
@@ -9,7 +9,7 @@ name = "Fallback, main server configuration"
     name = "Encryption"
 
         [main_server.encryption.encrypt]
-        ask = "Do you want to encrypt your backups ?"
+        ask = "Do you want to encrypt your backups?"
         type = "boolean"
         default = true
 
@@ -30,7 +30,7 @@ name = "Fallback, main server configuration"
         help = "This server has to be up, for the ssh-keyscan command."
 
         [main_server.ssh_config.ssh_port]
-        ask = "Port for the ssh connection to the fallback server ?"
+        ask = "Port for the ssh connection to the fallback server?"
         type = "number"
         default = 22
         optional = true
@@ -44,7 +44,7 @@ name = "Fallback, fallback server configuration"
     name = "ssh configuration"
 
         [fallback_server.ssh_config.pub_key]
-        ask = "Public key from your main server ?"
+        ask = "Public key from your main server?"
         type = "text"
         optional = true
 
@@ -53,7 +53,7 @@ name = "Fallback, fallback server configuration"
     name = "Auto deployement"
 
         [fallback_server.auto_deploy.auto_detect_failure]
-        ask = "Auto detect a failure of the main server ?"
+        ask = "Auto detect a failure of the main server?"
         type = "boolean"
         default = true
 
@@ -70,7 +70,7 @@ name = "Fallback, fallback server configuration"
         optional = true
 
         [fallback_server.auto_deploy.auto_deploy]
-        ask = "Deploy automatically the fallback in case of failure ?"
+        ask = "Deploy automatically the fallback in case of failure?"
         type = "boolean"
         default = false
 
@@ -82,7 +82,7 @@ name = "Global configuration"
     name = "Global configuration"
 
         [global.config.email_type]
-        ask = "Send HTML email to admin ?"
+        ask = "Send HTML email to admin?"
         type = "boolean"
         default = true
         help = "Allow app scripts to send HTML mails instead of plain text."
