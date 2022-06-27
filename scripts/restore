@@ -93,6 +93,9 @@ else
 		useradd -d "/home/$app" --system --user-group $app --shell /bin/bash
 	fi
 
+	# Allow the user to use ssh
+	adduser $app ssh.app
+
 	#=================================================
 	# RESTORE USER DIRECTORIES
 	#=================================================
@@ -164,6 +167,9 @@ then
 	# The parent directory shall belong to root
 	chown $app: -R "/home/$app"
 	chown root: "/home/$app"
+	chmod 755 -R "/home/$app"
+	# Set the permissions for the ssh key
+	chmod 644 "$chroot_dir/.ssh/authorized_keys"
 fi
 
 #=================================================

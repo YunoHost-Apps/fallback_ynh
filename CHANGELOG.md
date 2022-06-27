@@ -4,6 +4,11 @@ Changelog
 ## Unreleased
 - Nothing for now...
 
+## 0.92~ynh1 - 2022-06-27
+
+#### Fixed
+- Fix permissions
+
 ## 0.91~ynh1 - 2021-12-07
 
 #### Fixed

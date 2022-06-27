@@ -197,6 +197,9 @@ else
 		useradd -d "/home/$app" --system --user-group $app --shell /bin/bash
 	fi
 
+	# Allow the user to use ssh
+	adduser $app ssh.app
+
 	#=================================================
 	# ADD THE SSH PUBLIC KEY
 	#=================================================
@@ -261,6 +264,9 @@ else
 	# The parent directory shall belong to root
 	chown $app: -R "$chroot_dir"
 	chown root: "$chroot_dir"
+	chmod 755 -R "$chroot_dir"
+	# Set the permissions for the ssh key
+	chmod 644 "$chroot_dir/.ssh/authorized_keys"
 
 	# Set the chroot in the ssh config
 	echo "
