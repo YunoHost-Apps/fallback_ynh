@@ -37,8 +37,7 @@ auto_detect_failure=$(ynh_app_setting_get --app=$app --key=auto_detect_failure)
 # CHECK IF THE APP CAN BE RESTORED
 #=================================================
 
-test ! -d $final_path \
-	|| ynh_die --message="There is already a directory: $final_path "
+test ! -d $final_path || ynh_die --message="There is already a directory: $final_path "
 
 #=================================================
 # STANDARD RESTORATION STEPS
