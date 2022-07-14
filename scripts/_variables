@@ -1,4 +1,0 @@
-#!/bin/bash
-
-# Dependencies
-app_depencencies="ccrypt rsync mlocate"

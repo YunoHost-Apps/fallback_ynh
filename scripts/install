@@ -6,14 +6,11 @@
 # IMPORT GENERIC HELPERS
 #=================================================
 
-# Load common variables for all scripts.
-source _variables
-
 source _common.sh
 source /usr/share/yunohost/helpers
 
 #=================================================
-# MANAGE FAILURE OF THE SCRIPT
+# MANAGE SCRIPT FAILURE
 #=================================================
 
 # Exit if an error occurs during the execution of the script
@@ -93,7 +90,7 @@ ynh_app_setting_set --app=$app --key=admin_mail_html --value=1
 #=================================================
 ynh_script_progression --message="Installing dependencies..." --weight=14
 
-ynh_install_app_dependencies $app_depencencies
+ynh_install_app_dependencies $pkg_dependencies
 
 #=================================================
 # DOWNLOAD, CHECK AND UNPACK SOURCE
@@ -107,10 +104,14 @@ ynh_setup_source --dest_dir="$final_path"
 #=================================================
 # SPECIFIC SETUP
 #=================================================
-# CREATE THE DATA DIRECTORY
+# CREATE DATA DIRECTORY
 #=================================================
+ynh_script_progression --message="Creating a data directory..."
 
-mkdir -p "/home/yunohost.app/$app"
+datadir=/home/yunohost.app/$app
+ynh_app_setting_set --app=$app --key=datadir --value=$datadir
+
+mkdir -p $datadir
 
 if [ "$install_type" == "main" ]
 then
@@ -127,8 +128,7 @@ then
 	ynh_replace_string --match_string="ssh_host=.*" --replace_string="ssh_host=$ssh_host" --target_file="$configfile"
 	ynh_replace_string --match_string="ssh_port=.*" --replace_string="ssh_port=$ssh_port" --target_file="$configfile"
 
-	data_dir="/home/yunohost.app/$app/fallback_backup"
-	ynh_replace_string --match_string="main_storage_dir=.*" --replace_string="main_storage_dir=$data_dir" --target_file="$configfile"
+	ynh_replace_string --match_string="main_storage_dir=.*" --replace_string="main_storage_dir=$datadir/fallback_backup" --target_file="$configfile"
 	ynh_replace_string --match_string="encrypt=.*" --replace_string="encrypt=$encrypt" --target_file="$configfile"
 
 	#=================================================
@@ -166,7 +166,7 @@ then
 	#=================================================
 
 	mkdir -p "$final_path/send_process/checksum"
-	mkdir -p "$data_dir/backup"
+	mkdir -p "$datadir/fallback_backup/backup"
 
 	#=================================================
 	# STORE THE PASSWORD FOR ENCRYPTION
@@ -332,12 +332,12 @@ fi
 #=================================================
 
 if [ "$install_type" == "main" ]; then
-	ln -s "$final_path/send_process/app_list" "/home/yunohost.app/$app/app_list"
-	ln -s "$final_path/send_process/config.conf" "/home/yunohost.app/$app/config.conf"
-	ln -s "$final_path/update_from_fallback_process/update_from_fallback.sh" "/home/yunohost.app/$app/update_from_fallback"
+	ln -s "$final_path/send_process/app_list" "$datadir/app_list"
+	ln -s "$final_path/send_process/config.conf" "$datadir/config.conf"
+	ln -s "$final_path/update_from_fallback_process/update_from_fallback.sh" "$datadir/update_from_fallback"
 else
-	ln -s "$final_path/deploy_process/deploy_fallback.sh" "/home/yunohost.app/$app/deploy_fallback"
-	ln -s "$final_path/deploy_process/close_fallback.sh" "/home/yunohost.app/$app/close_fallback"
+	ln -s "$final_path/deploy_process/deploy_fallback.sh" "$datadir/deploy_fallback"
+	ln -s "$final_path/deploy_process/close_fallback.sh" "$datadir/close_fallback"
 fi
 
 #=================================================
@@ -373,7 +373,7 @@ then
 	#=================================================
 
 	ynh_print_info --message="
-By default, no apps will be backuped for your fallback server. To select which apps you want to backup, please have a look at the app_list file in /home/yunohost.app/$app/app_list.
+By default, no apps will be backuped for your fallback server. To select which apps you want to backup, please have a look at the app_list file in $datadir/app_list.
 Please take note of your public ssh key. This will be usefull during the installation on your fallback server." >&2
 	ynh_print_info --message="$(cat "$pub_key")" >&2
 fi
@@ -397,7 +397,7 @@ fi
 
 if [ "$install_type" == "main" ]
 then
-	Informations="${encrypt_infos}By default, no apps will be backuped for your fallback server. To select which apps you want to backup, please have a look at the app_list file in /home/yunohost.app/$app/app_list.
+	Informations="${encrypt_infos}By default, no apps will be backuped for your fallback server. To select which apps you want to backup, please have a look at the app_list file in $datadir/app_list.
 
 Please take note of your public ssh key. This will be usefull during the installation on your fallback server :
 $(cat "$pub_key")

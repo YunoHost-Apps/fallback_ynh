@@ -1,157 +1,162 @@
 {
-	"name": "Fallback server",
-	"id": "fallback",
-	"packaging_format": 1,
-	"description": {
-		"en": "Fallback server for YunoHost",
-		"fr": "Serveur de secours pour YunoHost"
-	},
-	"version": "0.92~ynh1",
-	"url": "https://github.com/maniackcrudelis/Fallback-server",
-	"license": "GPL-3.0",
-	"maintainer": {
-		"name": "",
-		"email": ""
-	},
-	"previous_maintainers": [{
-		"name": "Maniack Crudelis",
-		"email": "maniackc_dev@crudelis.fr"
-	}],
-	"requirements": {
-		"yunohost": ">= 4.3.0"
-	},
-	"multi_instance": false,
-	"services": [
-	],
-	"arguments": {
-		"install" : [
-			{
-				"name": "install_type",
-				"type": "string",
-				"ask": {
-					"en": "Choose which kind of installation you want.",
-					"fr": "Choisissez le type d'installation que vous souhaitez"
-				},
-				"choices": ["main server", "fallback server"],
-				"default": "main server",
-				"help": {
-					"en": "Choose 'main server' if you make an installation on your real server. Or 'fallback server' if it's your backup server.",
-					"fr": "Choisissez 'main server' si vous effectuez une installation sur votre vrai serveur. Ou 'fallback server' si c'est votre serveur de secours."
-				}
-			},
-			{
-				"name": "encrypt",
-				"type": "boolean",
-				"ask": {
-					"en": "[main server only] Do you want to encrypt your backups ?",
-					"fr": "[main server seulement] Voulez-vous chiffrer vos sauvegardes ?"
-				},
-				"default": true,
-				"help": {
-					"en": "You should desactive the encryption only if your fallback server is really safe.",
-					"fr": "Vous ne devriez désactiver le chiffrement que si le serveur de secours est vraiment sûr."
-				}
-			},
-			{
-				"name": "encryption_pwd",
-				"type": "password",
-				"ask": {
-					"en": "[main server only] Set the password for encryption.",
-					"fr": "[main server seulement] Définissez le mot de passe de chiffrement."
-				},
-				"help": {
-					"en": "It's needed if you not turn off the encryption.",
-					"fr": "C'est nécessaire si vous n'avez pas désactivé le chiffrement."
-				},
-				"optional": true
-			},
-			{
-				"name": "ssh_host",
-				"type": "string",
-				"ask": {
-					"en": "[main server only] Set the domain name (or ip adress) for the fallback server.",
-					"fr": "[main server seulement] Définissez le nom de domaine (ou l'adresse ip) du serveur de secours."
-				},
-				"example": "domain.tld",
-				"help": {
-					"en": "This server has to be up, for the ssh-keyscan command.",
-					"fr": "Ce serveur doit être en route, pour la commande ssh-keyscan."
-				},
-				"optional": true
-			},
-			{
-				"name": "ssh_port",
-				"type": "string",
-				"ask": {
-					"en": "[main server only] Set the port for the ssh connection.",
-					"fr": "[main server seulement] Définissez le port pour la connexion ssh."
-				},
-				"default": "22",
-				"optional": true
-			},
-			{
-				"name": "pub_key",
-				"type": "string",
-				"ask": {
-					"en": "[fallback server only] Put here the public ssh key.",
-					"fr": "[fallback server seulement] Placez ici la clé publique ssh."
-				},
-				"help": {
-					"en": "The public key will be given at the end of the install process for the main server.",
-					"fr": "La clé publique ssh vous sera fournie à la fin de l'installation du serveur principal."
-				},
-				"optional": true
-			},
-			{
-				"name": "auto_detect_failure",
-				"type": "boolean",
-				"ask": {
-					"en": "[fallback server only] Auto detect a failure of the main server ?",
-					"fr": "[fallback server seulement] Détection automatique d'une panne du serveur principal ?"
-				},
-				"default": true
-			},
-			{
-				"name": "delay_before_incident",
-				"type": "string",
-				"ask": {
-					"en": "[fallback server only] Delay before declaring an incident with the main server.",
-					"fr": "[fallback server seulement] Délai avant de déclarer un incident avec le serveur principal."
-				},
-				"help": {
-					"en": "Only for failure auto detection.",
-					"fr": "Uniquement pour la détection automatique de panne."
-				},
-				"choices" : ["5min", "1h", "4h", "8h", "12h", "24h"],
-				"default": "1h",
-				"optional": true
-			},
-			{
-				"name": "contact_mail",
-				"type": "string",
-				"ask": {
-					"en": "[fallback server only] Email address to contact in case of failure.",
-					"fr": "[fallback server seulement] Adresse e-mail à contacter en cas de panne."
-				},
-				"help": {
-					"en": "Only for failure auto detection.<br>Should be obviously an address on another server !",
-					"fr": "Uniquement pour la détection automatique de panne.<br>Devrait évidemment être une adresse sur un autre serveur !"
-				},
-				"optional": true
-			},
-			{
-				"name": "auto_deploy",
-				"type": "boolean",
-				"ask": {
-					"en": "[fallback server only] Deploy automatically the fallback in case of failure.",
-					"fr": "[fallback server seulement] Déployer automatiquement le fallback en cas de panne."
-				},
-				"help": {
-					"en": "Only for failure auto detection.",
-					"fr": "Uniquement pour la détection automatique de panne."
-				},
-				"default": false
-			}
-		]
-	}
+    "name": "Fallback server",
+    "id": "fallback",
+    "packaging_format": 1,
+    "description": {
+        "en": "YunoHost Fallback server",
+        "fr": "Serveur de secours YunoHost"
+    },
+    "version": "0.92~ynh2",
+    "url": "https://github.com/maniackcrudelis/Fallback-server",
+    "upstream": {
+        "license": "GPL-3.0",
+        "website": "https://github.com/maniackcrudelis/Fallback-server",
+        "code": "https://github.com/maniackcrudelis/Fallback-server"
+    },
+    "license": "GPL-3.0",
+    "maintainer": {
+        "name": "",
+        "email": ""
+    },
+    "previous_maintainers": [{
+        "name": "Maniack Crudelis",
+        "email": "maniackc_dev@crudelis.fr"
+    }],
+    "requirements": {
+        "yunohost": ">= 4.3.0"
+    },
+    "multi_instance": false,
+    "services": [
+    ],
+    "arguments": {
+        "install": [
+            {
+                "name": "install_type",
+                "type": "string",
+                "ask": {
+                    "en": "Choose which kind of installation you want.",
+                    "fr": "Choisissez le type d'installation que vous souhaitez"
+                },
+                "choices": ["main server", "fallback server"],
+                "default": "main server",
+                "help": {
+                    "en": "Choose 'main server' if you make an installation on your real server. Or 'fallback server' if it's your backup server.",
+                    "fr": "Choisissez 'main server' si vous effectuez une installation sur votre vrai serveur. Ou 'fallback server' si c'est votre serveur de secours."
+                }
+            },
+            {
+                "name": "encrypt",
+                "type": "boolean",
+                "ask": {
+                    "en": "[main server only] Do you want to encrypt your backups ?",
+                    "fr": "[main server seulement] Voulez-vous chiffrer vos sauvegardes ?"
+                },
+                "default": true,
+                "help": {
+                    "en": "You should desactive the encryption only if your fallback server is really safe.",
+                    "fr": "Vous ne devriez désactiver le chiffrement que si le serveur de secours est vraiment sûr."
+                }
+            },
+            {
+                "name": "encryption_pwd",
+                "type": "password",
+                "ask": {
+                    "en": "[main server only] Set the password for encryption.",
+                    "fr": "[main server seulement] Définissez le mot de passe de chiffrement."
+                },
+                "help": {
+                    "en": "It's needed if you not turn off the encryption.",
+                    "fr": "C'est nécessaire si vous n'avez pas désactivé le chiffrement."
+                },
+                "optional": true
+            },
+            {
+                "name": "ssh_host",
+                "type": "string",
+                "ask": {
+                    "en": "[main server only] Set the domain name (or ip adress) for the fallback server.",
+                    "fr": "[main server seulement] Définissez le nom de domaine (ou l'adresse ip) du serveur de secours."
+                },
+                "example": "domain.tld",
+                "help": {
+                    "en": "This server has to be up, for the ssh-keyscan command.",
+                    "fr": "Ce serveur doit être en route, pour la commande ssh-keyscan."
+                },
+                "optional": true
+            },
+            {
+                "name": "ssh_port",
+                "type": "string",
+                "ask": {
+                    "en": "[main server only] Set the port for the ssh connection.",
+                    "fr": "[main server seulement] Définissez le port pour la connexion ssh."
+                },
+                "default": "22",
+                "optional": true
+            },
+            {
+                "name": "pub_key",
+                "type": "string",
+                "ask": {
+                    "en": "[fallback server only] Put here the public ssh key.",
+                    "fr": "[fallback server seulement] Placez ici la clé publique ssh."
+                },
+                "help": {
+                    "en": "The public key will be given at the end of the install process for the main server.",
+                    "fr": "La clé publique ssh vous sera fournie à la fin de l'installation du serveur principal."
+                },
+                "optional": true
+            },
+            {
+                "name": "auto_detect_failure",
+                "type": "boolean",
+                "ask": {
+                    "en": "[fallback server only] Auto detect a failure of the main server ?",
+                    "fr": "[fallback server seulement] Détection automatique d'une panne du serveur principal ?"
+                },
+                "default": true
+            },
+            {
+                "name": "delay_before_incident",
+                "type": "string",
+                "ask": {
+                    "en": "[fallback server only] Delay before declaring an incident with the main server.",
+                    "fr": "[fallback server seulement] Délai avant de déclarer un incident avec le serveur principal."
+                },
+                "help": {
+                    "en": "Only for failure auto detection.",
+                    "fr": "Uniquement pour la détection automatique de panne."
+                },
+                "choices": ["5min", "1h", "4h", "8h", "12h", "24h"],
+                "default": "1h",
+                "optional": true
+            },
+            {
+                "name": "contact_mail",
+                "type": "string",
+                "ask": {
+                    "en": "[fallback server only] Email address to contact in case of failure.",
+                    "fr": "[fallback server seulement] Adresse e-mail à contacter en cas de panne."
+                },
+                "help": {
+                    "en": "Only for failure auto detection.<br>Should be obviously an address on another server !",
+                    "fr": "Uniquement pour la détection automatique de panne.<br>Devrait évidemment être une adresse sur un autre serveur !"
+                },
+                "optional": true
+            },
+            {
+                "name": "auto_deploy",
+                "type": "boolean",
+                "ask": {
+                    "en": "[fallback server only] Deploy automatically the fallback in case of failure.",
+                    "fr": "[fallback server seulement] Déployer automatiquement le fallback en cas de panne."
+                },
+                "help": {
+                    "en": "Only for failure auto detection.",
+                    "fr": "Uniquement pour la détection automatique de panne."
+                },
+                "default": false
+            }
+        ]
+    }
 }
