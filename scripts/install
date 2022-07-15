@@ -152,7 +152,7 @@ then
 	ynh_script_progression --message="Filling the apps list..."
 
 	echo "#000# For each app you want to backup, precede by [.]" > "$final_path/send_process/app_list"
-	yunohost app list -i | grep id: | sed 's/.*id:/[]:/' >> "$final_path/send_process/app_list"
+	yunohost app list | grep id: | sed 's/.*id:/[]:/' >> "$final_path/send_process/app_list"
 	ynh_replace_string --match_string=".*: fallback" --replace_string="[-]: fallback" --target_file="$final_path/send_process/app_list"
 
 	#=================================================
