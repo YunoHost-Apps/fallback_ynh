@@ -80,7 +80,6 @@ else
 
 	if [ $auto_detect_failure -eq 1 ]
 	then
-		ynh_script_progression --message="Backing up cron file..."
 		ynh_backup --src_path="/etc/cron.d/auto_deploy_fallback"
 	fi
 fi
