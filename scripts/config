@@ -52,10 +52,8 @@ if [ -z "$encrypt" ]; then
 	encrypt=0
 fi
 # Encryption password
-ynh_print_OFF
 old_encrypt_password="$(cat $passkey 2> /dev/null)"
 encrypt_password="${YNH_CONFIG_MAIN_SERVER_ENCRYPTION_ENCRYPTION_PWD:-$old_encrypt_password}"
-ynh_print_ON
 
 # ssh_host
 old_ssh_host="$(get_config_value ssh_host config_file_main)"
@@ -123,12 +121,10 @@ apply_config() {
 		# Change the password if needed
 		if [ "$encrypt" = "1" ]
 		then
-			ynh_print_OFF
 			test -n "$encrypt_password" || ynh_die --message="The password for encryption can't be empty if you choose to enable encryption."
-			ynh_print_ON
 			# Replace the password by the previous one
 			passkey="$final_path/send_process/passkey"
-			ynh_print_OFF; echo "$encrypt_password" > "$passkey"; ynh_print_ON
+			echo "$encrypt_password" > "$passkey"
 			chmod 400 "$passkey"
 			ynh_replace_string --match_string="^pass_file=.*" --replace_string="pass_file=$passkey" --target_file="$config_file_main"
 		fi

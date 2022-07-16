@@ -4,10 +4,20 @@ Changelog
 ## Unreleased
 - Nothing for now...
 
+## 0.92~ynh1 - 2022-06-27
+
+#### Fixed
+- Fix permissions
+
+## 0.91~ynh1 - 2021-12-07
+
+#### Fixed
+- Fix backup hooks
+
 ## 0.9~ynh1 - 2021-05-04
 
 #### Fixed
-- Fix YunoHost 4.1
+- [Fix YunoHost 4.1](https://github.com/maniackcrudelis/Fallback-server/commit/92a12a6b3566979b1e2a3f809fd12b45ce856851)
 
 ## [0.8~ynh3](https://github.com/YunoHost-Apps/fallback_ynh/pull/22) - 2020-04-09
 
