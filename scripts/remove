@@ -18,17 +18,24 @@ app=$YNH_APP_INSTANCE_NAME
 
 install_type=$(ynh_app_setting_get --app=$app --key=install_type)
 final_path=$(ynh_app_setting_get --app=$app --key=final_path)
+datadir=$(ynh_app_setting_get --app=$app --key=datadir)
 ssh_host=$(ynh_app_setting_get --app=$app --key=ssh_host)
 
 #=================================================
 # STANDARD REMOVE
 #=================================================
-# REMOVE DEPENDENCIES
+# REMOVE LOGROTATE CONFIGURATION
 #=================================================
-ynh_script_progression --message="Removing dependencies..." --weight=7
 
-# Remove metapackage and its dependencies
-ynh_remove_app_dependencies
+if [ "$install_type" == "main" ]
+then
+
+	ynh_script_progression --message="Removing logrotate configuration..."
+
+	# Remove the app-specific logrotate config
+	ynh_remove_logrotate
+	ynh_secure_remove --file="/var/log/$app"
+fi
 
 #=================================================
 # REMOVE APP MAIN DIR
@@ -38,17 +45,20 @@ ynh_script_progression --message="Removing app main directory..."
 # Remove the app directory securely
 ynh_secure_remove --file="$final_path"
 
-if [ "$install_type" == "main" ]
-then
-	#=================================================
-	# REMOVE LOGROTATE CONFIGURATION
-	#=================================================
-	ynh_script_progression --message="Removing logrotate configuration..."
+#=================================================
+# REMOVE DATA DIR
+#=================================================
+ynh_script_progression --message="Removing app data directory..." --weight=2
 
-	# Remove the app-specific logrotate config
-	ynh_remove_logrotate
-	ynh_secure_remove --file="/var/log/$app"
-fi
+ynh_secure_remove --file="$datadir"
+
+#=================================================
+# REMOVE DEPENDENCIES
+#=================================================
+ynh_script_progression --message="Removing dependencies..." --weight=7
+
+# Remove metapackage and its dependencies
+ynh_remove_app_dependencies
 
 #=================================================
 # SPECIFIC REMOVE
@@ -92,13 +102,6 @@ else
 
 	ynh_secure_remove --file="/etc/cron.d/auto_deploy_fallback"
 fi
-
-#=================================================
-# REMOVE THE DATA DIRECTORY
-#=================================================
-ynh_script_progression --message="Removing the data directory..." --weight=2
-
-ynh_secure_remove --file="/home/yunohost.app/$app"
 
 #=================================================
 # END OF SCRIPT
