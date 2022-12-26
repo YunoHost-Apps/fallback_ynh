@@ -4,6 +4,11 @@ Changelog
 ## Unreleased
 - Nothing for now...
 
+## 0.93~ynh1 - 2022-12-26
+
+#### Fixed
+- Various fixes
+
 ## 0.92~ynh1 - 2022-06-27
 
 #### Fixed

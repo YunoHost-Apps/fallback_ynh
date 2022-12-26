@@ -19,7 +19,7 @@ Fallback is a special app, only by command line interface, which provide a way t
 This other server will allow you to deploy a copy of your server to bring back you to internet during your break down.
 
 
-**Shipped version:** 0.92~ynh2
+**Shipped version:** 0.93~ynh1
 ## Disclaimers / important information
 
 ## Configuration

@@ -6,7 +6,7 @@
         "en": "YunoHost Fallback server",
         "fr": "Serveur de secours YunoHost"
     },
-    "version": "0.92~ynh2",
+    "version": "0.93~ynh1"
     "url": "https://github.com/maniackcrudelis/Fallback-server",
     "upstream": {
         "license": "GPL-3.0",

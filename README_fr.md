@@ -19,7 +19,7 @@ Fallback est une application spéciale, uniquement en ligne de commande, qui vou
 Cet autre serveur va vous permettre de déployer une copie de votre serveur pour retrouver vos services internet durant la panne.
 
 
-**Version incluse :** 0.92~ynh2
+**Version incluse :** 0.93~ynh1
 ## Avertissements / informations importantes
 
 ## Configuration

@@ -95,8 +95,11 @@ fi
 if [ "$upgrade_type" == "UPGRADE_APP" ]
 then
     ynh_script_progression --message="Upgrading source files..." --weight=2
+	# Do not replace credentials
+	mv "$final_path/DynHost/cred" "$final_path/DynHost/cred_backup"
 	# Download, check integrity, uncompress and patch the source from app.src
 	ynh_setup_source --dest_dir="$final_path"
+	mv "$final_path/DynHost/cred_backup" "$final_path/DynHost/cred"
 fi
 
 #=================================================
