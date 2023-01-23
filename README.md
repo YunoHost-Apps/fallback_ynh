@@ -5,7 +5,7 @@ It shall NOT be edited by hand.
 
 # Fallback server for YunoHost
 
-[![Integration level](https://dash.yunohost.org/integration/fallback.svg)](https://dash.yunohost.org/appci/app/fallback) ![Working status](https://ci-apps.yunohost.org/ci/badges/fallback.status.svg) ![Maintenance status](https://ci-apps.yunohost.org/ci/badges/fallback.maintain.svg)  
+[![Integration level](https://dash.yunohost.org/integration/fallback.svg)](https://dash.yunohost.org/appci/app/fallback) ![Working status](https://ci-apps.yunohost.org/ci/badges/fallback.status.svg) ![Maintenance status](https://ci-apps.yunohost.org/ci/badges/fallback.maintain.svg)
 [![Install Fallback server with YunoHost](https://install-app.yunohost.org/install-with-yunohost.svg)](https://install-app.yunohost.org/?app=fallback)
 
 *[Lire ce readme en français.](./README_fr.md)*
@@ -78,6 +78,10 @@ That's a difficult question...
 And that needs more experimentation...  
 But, there a way to do that simply. Use a dynamic dns entry at your registrar (if it allow it), even if you have a static ip. And update this ip if you have to switch to your fallback.  
 Depend of your registrar, you should have a CLI tools to do that simplier.
+
+## :red_circle: Antifeatures
+
+- **Package not maintained**: This YunoHost package is not maintained and needs adoption.
 
 ## Documentation and resources
 

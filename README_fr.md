@@ -5,15 +5,15 @@ It shall NOT be edited by hand.
 
 # Fallback server pour YunoHost
 
-[![Niveau d'intégration](https://dash.yunohost.org/integration/fallback.svg)](https://dash.yunohost.org/appci/app/fallback) ![Statut du fonctionnement](https://ci-apps.yunohost.org/ci/badges/fallback.status.svg) ![Statut de maintenance](https://ci-apps.yunohost.org/ci/badges/fallback.maintain.svg)  
+[![Niveau d’intégration](https://dash.yunohost.org/integration/fallback.svg)](https://dash.yunohost.org/appci/app/fallback) ![Statut du fonctionnement](https://ci-apps.yunohost.org/ci/badges/fallback.status.svg) ![Statut de maintenance](https://ci-apps.yunohost.org/ci/badges/fallback.maintain.svg)
 [![Installer Fallback server avec YunoHost](https://install-app.yunohost.org/install-with-yunohost.svg)](https://install-app.yunohost.org/?app=fallback)
 
 *[Read this readme in english.](./README.md)*
 
-> *Ce package vous permet d'installer Fallback server rapidement et simplement sur un serveur YunoHost.
-Si vous n'avez pas YunoHost, regardez [ici](https://yunohost.org/#/install) pour savoir comment l'installer et en profiter.*
+> *Ce package vous permet d’installer Fallback server rapidement et simplement sur un serveur YunoHost.
+Si vous n’avez pas YunoHost, regardez [ici](https://yunohost.org/#/install) pour savoir comment l’installer et en profiter.*
 
-## Vue d'ensemble
+## Vue d’ensemble
 
 Fallback est une application spéciale, uniquement en ligne de commande, qui vous donne le moyen de disposer d'un second serveur que vous pourrez utiliser si le premier tombe en panne.  
 Cet autre serveur va vous permettre de déployer une copie de votre serveur pour retrouver vos services internet durant la panne.
@@ -80,10 +80,14 @@ Et ça nécessite plus d'expérimentation...
 Mais, il y a un moyen simple de faire ça. Utiliser une entrée de dns dynamique chez votre registrar (si il vous le permet), même si vous avez une IP statique. Et mettez à jour cette IP si vous devez basculer sur votre serveur de secours.  
 Selon votre registrar, vous devriez disposer d'un outil en ligne de commande pour faire simplement.
 
+## :red_circle: Fonctions indésirables
+
+- **Package not maintained**: This YunoHost package is not maintained and needs adoption.
+
 ## Documentations et ressources
 
-* Site officiel de l'app : <https://github.com/maniackcrudelis/Fallback-server>
-* Dépôt de code officiel de l'app : <https://github.com/maniackcrudelis/Fallback-server>
+* Site officiel de l’app : <https://github.com/maniackcrudelis/Fallback-server>
+* Dépôt de code officiel de l’app : <https://github.com/maniackcrudelis/Fallback-server>
 * Documentation YunoHost pour cette app : <https://yunohost.org/app_fallback>
 * Signaler un bug : <https://github.com/YunoHost-Apps/fallback_ynh/issues>
 
@@ -99,4 +103,4 @@ ou
 sudo yunohost app upgrade fallback -u https://github.com/YunoHost-Apps/fallback_ynh/tree/testing --debug
 ```
 
-**Plus d'infos sur le packaging d'applications :** <https://yunohost.org/packaging_apps>
+**Plus d’infos sur le packaging d’applications :** <https://yunohost.org/packaging_apps>
